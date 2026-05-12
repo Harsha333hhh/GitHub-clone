@@ -16,12 +16,13 @@ dotenv.config()
 
 // create http server
 const app = express()
-const port = 4000
+const port = process.env.PORT || 4000
+const mongoURL = process.env.MONGODB_URI || 'mongodb://localhost:27017/GitHub'
 
 // Connect to MongoDB database
 async function connectDB() {
   try {
-    await connect('mongodb://localhost:27017/GitHub')
+    await connect(mongoURL)
     console.log('Connected to DB')
     app.listen(port, () => console.log(`server listening to port ${port}...`))
   } catch (err) {
@@ -31,8 +32,20 @@ async function connectDB() {
 }
 
 connectDB()
+
+// CORS configuration for both development and production
+const allowedOrigins = process.env.NODE_ENV === 'production' 
+  ? ['https://*.vercel.app', process.env.FRONTEND_URL] 
+  : ['http://localhost:5173', 'http://localhost:5174'];
+
 app.use(cors({
-  origin: ['http://localhost:5173', 'http://localhost:5174'], 
+  origin: (origin, callback) => {
+    if (!origin || process.env.NODE_ENV !== 'production' || origin.includes('vercel.app')) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
   credentials: true,               // CRITICAL: Allows HttpOnly cookies to be sent
   methods: ['GET', 'POST', 'PUT', 'DELETE'],
   allowedHeaders: ['Content-Type', 'Authorization']
