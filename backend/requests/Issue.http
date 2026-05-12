@@ -1,0 +1,30 @@
+# Issue API Requests
+
+### Create an issue in a repository
+POST http://localhost:4000/issue-api/69b79e1eeea7d84955bfca4d/issues
+Content-Type: application/json
+
+{
+  "title": "Bug report",
+  "description": "Description of the issue",
+  "status": "open"
+}
+
+### Get all issues in a repository
+GET http://localhost:4000/issue-api/69b79e1eeea7d84955bfca4d/issues
+
+### Get a specific issue
+GET http://localhost:4000/issue-api/issue/69b8da20d4f5f802426f632f
+
+### Update an issue
+PUT http://localhost:4000/issue-api/issue/69b8da20d4f5f802426f632f
+Content-Type: application/json
+
+{
+  "title": "Updated bug report",
+  "description": "Updated description",
+  "status": "closed"
+}
+
+### Delete an issue
+DELETE http://localhost:4000/issue-api/issue/69b8da20d4f5f802426f632f

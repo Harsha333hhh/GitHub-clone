@@ -1,0 +1,28 @@
+# File API Requests
+
+### Upload a file to a repository
+POST http://localhost:4000/file-api/69b79e1eeea7d84955bfca4d/files
+Content-Type: application/json
+Cookie: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2OWI4ZDJjMmE4YjUwOTI4OGYyMDc3NjYiLCJlbWFpbCI6InVzaGFAZXhhbXBsZS5jb20iLCJpYXQiOjE3NzM3MjEwNjksImV4cCI6MTc3MzgwNzQ2OX0.utjkMtgcagcOOpVY1pzf_AA3bld-eIiioI7Uo-RXSEI
+
+{
+  "fileName": "example.txt",
+  "content": "This is the file content",
+  "path": "/example.txt"
+}
+
+### Get all files in a repository
+GET http://localhost:4000/file-api/69b79e1eeea7d84955bfca4d/files
+
+### Update a file
+PUT http://localhost:4000/file-api/files/69b8d678b8b8a3829becf1bd
+Content-Type: application/json
+
+{
+  "fileName": "updated-example.txt",
+  "content": "Updated file content",
+  "path": "/updated-example.txt"
+}
+
+### Delete a file
+DELETE http://localhost:4000/file-api/files/69b8d668b8b8a3829becf1ba

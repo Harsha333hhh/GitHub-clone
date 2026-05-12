@@ -1,0 +1,32 @@
+### create repository
+POST http://localhost:4000/repository-api/repositories
+Content-Type: application/json
+Cookie: token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2OWI3OGRhMTA5NGEwMjExMTI1ZGY5MzkiLCJlbWFpbCI6ImhhcnNoYUBleGFtcGxlLmNvbSIsImlhdCI6MTc3MzY0MTA1OCwiZXhwIjoxNzczNzI3NDU4fQ.FE-NDo4qUj67w52n3BmwsoWTQF2wtLNMOxAxSJyph80
+
+{
+    "title":"My First Repo",
+    "description":"This is my first repository.",
+    "status":"active",
+    "visibility":"public",
+    "language":"JavaScript"
+}
+
+### read all repositories
+GET http://localhost:4000/repository-api/repositories   
+
+###update repository
+PUT http://localhost:4000/repository-api/repositories/69b8d873f1b82421c7d27e87
+Content-Type: application/json
+Cookie: token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2OWI3OGRhMTA5NGEwMjExMTI1ZGY5MzkiLCJlbWFpbCI6ImhhcnNoYUBleGFtcGxlLmNvbSIsImlhdCI6MTc3MzY0MTA1OCwiZXhwIjoxNzczNzI3NDU4fQ.FE-NDo4qUj67w52n3BmwsoWTQF2wtLNMOxAxSJyph80
+
+{
+    "title":"My Updated Repo",
+    "description":"This is my updated repository.",
+    "status":"active",
+    "visibility":"public",
+    "language":"JavaScript"
+}
+
+### delete repository
+DELETE http://localhost:4000/repository-api/repositories/69b8d873f1b82421c7d27e87
+Cookie: token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2OWI3OGRhMTA5NGEwMjExMTI1ZGY5MzkiLCJlbWFpbCI6ImhhcnNoYUBleGFtcGxlLmNvbSIsImlhdCI6MTc3MzY0MTA1OCwiZXhwIjoxNzczNzI3NDU4fQ.FE-NDo4qUj67w52n3BmwsoWTQF2wtLNMOxAxSJyph80

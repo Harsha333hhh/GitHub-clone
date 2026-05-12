@@ -1,0 +1,31 @@
+### create user 
+POST http://localhost:4000/user-api/users
+Content-Type: application/json
+
+{
+    "name":"Harsha",
+    "email":"usha@example.com",
+    "password":"password123",
+    "bio":"Software developer with a passion for open source."
+}
+
+###login user 
+POST http://localhost:4000/user-api/login
+Content-Type: application/json
+
+{
+    "email":"usha@example.com",
+    "password":"password123"
+}
+###logout user
+POST http://localhost:4000/user-api/logout
+
+### update user profile
+PUT http://localhost:4000/user-api/users
+Content-Type: application/json
+
+{
+    "name":"Harsha Vardan",
+    "password":"newpassword123",
+    "bio":"Full stack developer and open source enthusiast."
+}

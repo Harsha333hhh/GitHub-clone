@@ -1,0 +1,35 @@
+### Create a Pull Request
+POST http://localhost:4000/pull-request-api/69b8d073859810fed190388b/pull-requests
+Content-Type: application/json
+Cookie: token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2OWI4ZDAxZTg1OTgxMGZlZDE5MDM4ODciLCJlbWFpbCI6InZhcnNoYUBleGFtcGxlLmNvbSIsImlhdCI6MTc3MzcxOTU5NywiZXhwIjoxNzczODA1OTk3fQ.0qBVzpxxGB40BC6v6Kq_bLfxiiYrQWTFoPrdSBZKMlk
+
+{
+    "title": "Add new feature to main branch",
+    "description": "This PR adds a new feature that improves user experience.",
+    "sourceBranch": "feature/new-feature",
+    "targetBranch": "main",
+    "reviewers": ["69b8d01e859810fed1903887"]
+}
+
+### Get all Pull Requests for a repository
+GET http://localhost:4000/pull-request-api/69b8d073859810fed190388b/pull-requests
+Cookie: token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2OWI4ZDAxZTg1OTgxMGZlZDE5MDM4ODciLCJlbWFpbCI6InZhcnNoYUBleGFtcGxlLmNvbSIsImlhdCI6MTc3MzcxOTU5NywiZXhwIjoxNzczODA1OTk3fQ.0qBVzpxxGB40BC6v6Kq_bLfxiiYrQWTFoPrdSBZKMlk
+
+### Get a single Pull Request by ID
+GET http://localhost:4000/pull-request-api/pull-request/69b8d073859810fed190388c
+Cookie: token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2OWI4ZDAxZTg1OTgxMGZlZDE5MDM4ODciLCJlbWFpbCI6InZhcnNoYUBleGFtcGxlLmNvbSIsImlhdCI6MTc3MzcxOTU5NywiZXhwIjoxNzczODA1OTk3fQ.0qBVzpxxGB40BC6v6Kq_bLfxiiYrQWTFoPrdSBZKMlk
+
+### Update a Pull Request
+PUT http://localhost:4000/pull-request-api/pull-request/69b8d073859810fed190388c
+Content-Type: application/json
+Cookie: token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2OWI4ZDAxZTg1OTgxMGZlZDE5MDM4ODciLCJlbWFpbCI6InZhcnNoYUBleGFtcGxlLmNvbSIsImlhdCI6MTc3MzcxOTU5NywiZXhwIjoxNzczODA1OTk3fQ.0qBVzpxxGB40BC6v6Kq_bLfxiiYrQWTFoPrdSBZKMlk
+
+{
+    "title": "Updated feature implementation",
+    "description": "Updated description with more details.",
+    "status": "merged"
+}
+
+### Delete a Pull Request
+DELETE http://localhost:4000/pull-request-api/pull-request/69b8d073859810fed190388c
+Cookie: token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2OWI4ZDAxZTg1OTgxMGZlZDE5MDM4ODciLCJlbWFpbCI6InZhcnNoYUBleGFtcGxlLmNvbSIsImlhdCI6MTc3MzcxOTU5NywiZXhwIjoxNzczODA1OTk3fQ.0qBVzpxxGB40BC6v6Kq_bLfxiiYrQWTFoPrdSBZKMlk
