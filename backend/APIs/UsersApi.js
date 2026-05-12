@@ -11,10 +11,12 @@ export const userRoute = express.Router()
 
 userRoute.post('/users', async (req, res, next) => {
   try {
+    console.log('Signup request received:', req.body);
     const userData = await register({ ...req.body })
     res.status(201).json({ message: 'User registered successfully', user: userData })
   } catch (err) {
-    next(err)
+    console.error('Signup error:', err);
+    res.status(err.status || 500).json({ message: err.message || 'Registration failed', error: err.toString() })
   }
 })
 

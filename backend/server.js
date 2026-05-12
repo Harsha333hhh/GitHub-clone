@@ -16,13 +16,12 @@ dotenv.config()
 
 // create http server
 const app = express()
-const port = process.env.PORT || 4000
-const mongoURL = process.env.MONGODB_URI || 'mongodb://localhost:27017/GitHub'
+const port = 4000
 
 // Connect to MongoDB database
 async function connectDB() {
   try {
-    await connect(mongoURL)
+    await connect('mongodb://localhost:27017/GitHub')
     console.log('Connected to DB')
     app.listen(port, () => console.log(`server listening to port ${port}...`))
   } catch (err) {
@@ -33,20 +32,9 @@ async function connectDB() {
 
 connectDB()
 
-// CORS configuration for both development and production
-const allowedOrigins = process.env.NODE_ENV === 'production' 
-  ? ['https://*.vercel.app', process.env.FRONTEND_URL] 
-  : ['http://localhost:5173', 'http://localhost:5174'];
-
 app.use(cors({
-  origin: (origin, callback) => {
-    if (!origin || process.env.NODE_ENV !== 'production' || origin.includes('vercel.app')) {
-      callback(null, true);
-    } else {
-      callback(new Error('Not allowed by CORS'));
-    }
-  },
-  credentials: true,               // CRITICAL: Allows HttpOnly cookies to be sent
+  origin: ['http://localhost:5173', 'http://localhost:5174'], 
+  credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE'],
   allowedHeaders: ['Content-Type', 'Authorization']
 }))
@@ -75,23 +63,14 @@ app.use('/issue-api', issueRouter);
 app.use('/pullrequest-api', authMiddleware, pullRequestRouter);
 app.use('/notification-api', authMiddleware, notificationRouter);
 
-// logout for user,author and admin(clear cookie)
-
-//app.post('/logout', (req, res) => {
- // res.clearCookie('token', { httpOnly: true, sameSite: 'lax', secure: true })// must match original cookie options
- // res.status(200).json({ message: 'Logout successful' })
-//})
-
-
-// dealing with invalid path 
-app.use((req, res,next) => {
-  //console.log(req)//however req is a very big object so we are logging it to see what it contains
-console.log(req.url);// it will give us the path of the req which is being made to the server
-  res.json({ message: `${req.url} is invalid`  }); // it has to be placed here becouse if we place it before the API routes 
-})                   //then it will be executed for all the requests and we will get invalid path for all the requests
-
-// Error handling middleware
+// Error handling middleware (BEFORE invalid path handler)
 app.use((err, req, res, next) => {
-  console.error(err)
-  res.status(500).json({ message: 'error', reason: err.message })
+  console.error('Server error:', err)
+  res.status(err.status || 500).json({ message: err.message || 'Internal server error', error: err.toString() })
+})
+
+// dealing with invalid path (AFTER all routes and error handler)
+app.use((req, res) => {
+  console.log('Invalid path:', req.url);
+  res.status(404).json({ message: `${req.url} is invalid`  });
 })
