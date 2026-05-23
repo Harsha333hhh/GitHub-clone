@@ -30,7 +30,8 @@ function Signup() {
       const response = await axiosInstance.post('/user-api/users', formData);
       const user = response.data.user || response.data.payload;
       completeSignup(user);
-      window.location.replace('/dashboard');
+      // Redirect to login with pre-filled email
+      window.location.replace(`/login?email=${encodeURIComponent(formData.email)}`);
     } catch (err) {
       setError(err.response?.data?.message || err.message || 'Registration failed');
       console.error('Signup error:', err);

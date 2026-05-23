@@ -1,5 +1,5 @@
-import React, { useState, useRef } from 'react';
-import { Link } from 'react-router-dom';
+import React, { useState, useRef, useEffect } from 'react';
+import { Link, useSearchParams } from 'react-router-dom';
 import { Github, AlertCircle, ArrowRight } from 'lucide-react';
 import { useAuth } from '../store/authStore';
 
@@ -10,6 +10,15 @@ function Login() {
   const [loading, setLoading] = useState(false);
   const { login: authLogin } = useAuth();
   const isSubmittingRef = useRef(false);
+  const [searchParams] = useSearchParams();
+
+  // Pre-fill email if coming from signup
+  useEffect(() => {
+    const emailParam = searchParams.get('email');
+    if (emailParam) {
+      setEmail(decodeURIComponent(emailParam));
+    }
+  }, [searchParams]);
 
   const handleLogin = async (e) => {
     e.preventDefault();
