@@ -227,3 +227,5 @@ function PullRequests() {
   );
 }
 
+export default PullRequests;
+
