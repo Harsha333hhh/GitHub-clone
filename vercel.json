@@ -1,13 +1,54 @@
 {
-  "experimentalServices": {
-    "frontend": {
-      "entrypoint": "frontend",
-      "routePrefix": "/",
-      "framework": "vite"
-    },
-    "backend": {
-      "entrypoint": "backend",
-      "routePrefix": "/_/backend"
+  "buildCommand": "npm run build --prefix frontend && npm run build --prefix backend",
+  "outputDirectory": "frontend/dist",
+  "devCommand": "npm run dev --prefix frontend",
+  "framework": "vite",
+  "functions": {
+    "backend/server.js": {
+      "memory": 1024,
+      "maxDuration": 60
     }
-  }
+  },
+  "routes": [
+    {
+      "src": "/api/(.*)",
+      "dest": "backend/server.js"
+    },
+    {
+      "src": "/user-api/(.*)",
+      "dest": "backend/server.js"
+    },
+    {
+      "src": "/file-api/(.*)",
+      "dest": "backend/server.js"
+    },
+    {
+      "src": "/repository-api/(.*)",
+      "dest": "backend/server.js"
+    },
+    {
+      "src": "/pullrequest-api/(.*)",
+      "dest": "backend/server.js"
+    },
+    {
+      "src": "/issues-api/(.*)",
+      "dest": "backend/server.js"
+    },
+    {
+      "src": "/notification-api/(.*)",
+      "dest": "backend/server.js"
+    },
+    {
+      "src": "/commit-api/(.*)",
+      "dest": "backend/server.js"
+    },
+    {
+      "src": "/auth/(.*)",
+      "dest": "backend/server.js"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "/index.html"
+    }
+  ]
 }
