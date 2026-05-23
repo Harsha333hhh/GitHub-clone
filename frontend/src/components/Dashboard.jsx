@@ -83,7 +83,7 @@ function Dashboard() {
             <span style={{ fontSize: '12px', color: 'var(--fg-subtle)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em' }}>Dashboard</span>
           </div>
           <h1 style={{ fontSize: '24px', fontWeight: 700, color: 'var(--fg-default)', margin: 0 }}>
-            Welcome back, {user?.name || 'developer'}
+            Welcome back, {currentUser?.name || 'developer'}
           </h1>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
