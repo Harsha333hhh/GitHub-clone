@@ -18,7 +18,7 @@ const fileSchema=new Schema(
         },
         size:
         {
-            type:String,
+            type:Number,
         },
         repoId:
         {
@@ -34,4 +34,4 @@ const fileSchema=new Schema(
         versionKey:false
     }
 );
-export const fileModel=model("file",fileSchema,)
+export const fileModel=model("file",fileSchema)

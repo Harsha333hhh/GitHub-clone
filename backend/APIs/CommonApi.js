@@ -47,7 +47,8 @@ commonRouter.put("/change-password/:userId",async(req,res)=>{
     // authenticate user with old password 
     //check if old password is correct or not
     if(bcrypt.compareSync(oldPassword,user.password)===true){
-    user.password=newPassword;
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+    user.password = hashedPassword;
     await user.save();
     res.status(200).json({message:"Password changed successfully"})
     }else{
