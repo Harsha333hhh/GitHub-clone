@@ -34,24 +34,62 @@ repositoryRoute.get('/repo/:repoId', async (req, res) => {
 // create repositories
 repositoryRoute.post('/repositories',async(req,res)=>{
     try {
+        console.log("=== Repository Creation Request ===");
+        console.log("Body:", req.body);
+        console.log("User from middleware:", req.user);
+        
         // get repositories from req
         let repositoryData=req.body;
+        
         //check for owner
-        let ownerId=req.user.userId;
+        let ownerId=req.user?.userId;
+        console.log("Owner ID:", ownerId);
+        
         if(!ownerId){
-            return res.status(401).json({message:"Unauthorized"})
+            console.log("No user ID found");
+            return res.status(401).json({message:"Unauthorized", reason: "No user ID in token"})
         }
+        
+        // Ensure required fields
+        if (!repositoryData.title) {
+            console.log("Missing title");
+            return res.status(400).json({message:"Title is required"});
+        }
+        
         // create repository document 
-        let repository=new RepositoryModel({...repositoryData,owner:ownerId});
+        let repository=new RepositoryModel({
+            title: repositoryData.title,
+            description: repositoryData.description || "",
+            language: repositoryData.language || "JavaScript",
+            visibility: repositoryData.visibility || "public",
+            status: repositoryData.status || "active",
+            owner: ownerId
+        });
+        
+        console.log("Repository object created:", repository);
+        
         // save repository 
         let createdrepository=await repository.save();
+        console.log("Repository saved:", createdrepository._id);
+        
         // populate owner info before sending response
         await createdrepository.populate('owner', 'name email profileImage');
+        console.log("Repository populated with owner info");
+        
         // send res
         res.status(201).json({message:"Repository created successfully",payload:createdrepository})
     } catch (err) {
-        console.error("Repository creation error:", err.message, err.errors);
-        res.status(500).json({message:"Error creating repository",reason:err.message})
+        console.error("=== Repository Creation Error ===");
+        console.error("Error message:", err.message);
+        console.error("Error name:", err.name);
+        console.error("Error details:", err.errors || err);
+        console.error("Stack trace:", err.stack);
+        
+        res.status(500).json({
+            message:"Error creating repository",
+            reason:err.message,
+            details: err.errors ? Object.keys(err.errors).map(k => err.errors[k].message) : []
+        })
     }
 })
 
