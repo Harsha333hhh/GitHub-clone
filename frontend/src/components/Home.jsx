@@ -1,12 +1,18 @@
 import React, { useEffect, useState } from 'react';
 import axiosInstance from '../api/axiosConfig';
+import { useAuth } from '../store/authStore';
 import { Link } from 'react-router-dom';
 import { Book, Star, Circle, Plus, Search } from 'lucide-react';
 
 function Home() {
   const [repos, setRepos] = useState([]);
   const [loading, setLoading] = useState(true);
-  const user = JSON.parse(localStorage.getItem('user'));
+  const { currentUser, syncAuthState } = useAuth();
+
+  // Sync auth state on mount
+  useEffect(() => {
+    syncAuthState();
+  }, [syncAuthState]);
 
   useEffect(() => {
     const fetchPublicRepos = async () => {
@@ -63,8 +69,8 @@ function Home() {
         </div>
 
         <ul style={{ listStyle: 'none', display: 'flex', flexDirection: 'column', gap: '2px' }}>
-          {user?.repositories?.length > 0 ? (
-            user.repositories.slice(0, 7).map((repo) => (
+          {currentUser?.repositories?.length > 0 ? (
+            currentUser.repositories.slice(0, 7).map((repo) => (
               <li key={repo._id}>
                 <Link to={`/repo/${repo._id}`} style={{
                   display: 'flex', alignItems: 'center', gap: '8px',
@@ -75,8 +81,8 @@ function Home() {
                   onMouseEnter={e => e.currentTarget.style.background = 'var(--bg-subtle)'}
                   onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
                 >
-                  <img src={user.profileImage} alt="owner" style={{ width: '16px', height: '16px', borderRadius: '50%' }} />
-                  <span style={{ fontWeight: 600 }}>{user.name}</span>
+                  <img src={currentUser.profileImage} alt="owner" style={{ width: '16px', height: '16px', borderRadius: '50%' }} />
+                  <span style={{ fontWeight: 600 }}>{currentUser.name}</span>
                   <span style={{ color: 'var(--fg-subtle)' }}>/</span>
                   <span style={{ color: 'var(--fg-muted)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                     {repo.title || repo.name}

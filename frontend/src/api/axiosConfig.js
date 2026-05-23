@@ -23,16 +23,24 @@ axiosInstance.interceptors.request.use(
   }
 );
 
-// Handle 401 responses (expired token)
+// Handle 401 responses (expired token) - but be smart about it
+let is401HandlingInProgress = false;
 axiosInstance.interceptors.response.use(
   (response) => response,
   (error) => {
-    if (error.response?.status === 401) {
+    // Only handle 401 once to avoid infinite loops
+    if (error.response?.status === 401 && !is401HandlingInProgress) {
+      is401HandlingInProgress = true;
+      
       // Clear auth data if token is expired
       localStorage.removeItem('token');
       localStorage.removeItem('user');
       delete axiosInstance.defaults.headers.common['Authorization'];
-      // Redirect to login if needed (component will handle it)
+      
+      // Reset the flag after a brief delay
+      setTimeout(() => {
+        is401HandlingInProgress = false;
+      }, 1000);
     }
     return Promise.reject(error);
   }

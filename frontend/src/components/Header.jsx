@@ -34,12 +34,19 @@ function Header() {
   // Fetch unread count periodically
   React.useEffect(() => {
     if (!isAuthenticated) return;
+    
     const fetchCount = async () => {
       try {
         const res = await axiosInstance.get('/notification-api/unread-count');
         setUnreadCount(res.data.payload || 0);
-      } catch { /* ignore */ }
+      } catch (err) {
+        // Only log unexpected errors, ignore 401s (token expired)
+        if (err.response?.status !== 401) {
+          console.error('Failed to fetch unread count:', err.message);
+        }
+      }
     };
+    
     fetchCount();
     const interval = setInterval(fetchCount, 15000);
     return () => clearInterval(interval);
