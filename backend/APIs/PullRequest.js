@@ -64,27 +64,6 @@ pullRequestRouter.post('/repo/:repoId/create', authMiddleware, async (req, res) 
   }
 });
 
-// ===== Get PR details =====
-pullRequestRouter.get('/:prId', async (req, res) => {
-  try {
-    const pr = await PullRequestModel.findById(req.params.prId)
-      .populate('author', 'name email profileImage')
-      .populate('repository', 'title owner')
-      .populate('reviews.reviewer', 'name email profileImage')
-      .populate('comments.author', 'name email profileImage')
-      .populate('mergedBy', 'name email profileImage')
-      .populate('closedBy', 'name email profileImage');
-
-    if (!pr) {
-      return res.status(404).json({ message: 'Pull request not found' });
-    }
-
-    res.json({ message: 'Pull request retrieved', payload: pr });
-  } catch (err) {
-    res.status(500).json({ message: 'Error fetching pull request', reason: err.message });
-  }
-});
-
 // ===== Get PRs for a repository =====
 pullRequestRouter.get('/repo/:repoId/list', async (req, res) => {
   try {
@@ -100,6 +79,57 @@ pullRequestRouter.get('/repo/:repoId/list', async (req, res) => {
       .sort({ createdAt: -1 });
 
     res.json({ message: 'Pull requests retrieved', payload: prs });
+  } catch (err) {
+    res.status(500).json({ message: 'Error fetching pull requests', reason: err.message });
+  }
+});
+
+// ===== LEGACY: Get PRs sent by current user =====
+pullRequestRouter.get('/sent', authMiddleware, async (req, res) => {
+  try {
+    const prs = await PullRequestModel.find({ 
+      $or: [
+        { author: req.user.userId },
+        { from: req.user.userId }
+      ]
+    })
+      .populate([
+        { path: 'author', select: 'name email profileImage' },
+        { path: 'from', select: 'name email profileImage' },
+        { path: 'to', select: 'name email profileImage' },
+        { path: 'repository', select: 'title' }
+      ])
+      .sort({ createdAt: -1 });
+
+    res.json({ message: 'Sent pull requests', payload: prs });
+  } catch (err) {
+    res.status(500).json({ message: 'Error fetching pull requests', reason: err.message });
+  }
+});
+
+// ===== LEGACY: Get PRs received by current user =====
+pullRequestRouter.get('/received', authMiddleware, async (req, res) => {
+  try {
+    // First, find all repositories owned by the user
+    const userRepositories = await RepositoryModel.find({ owner: req.user.userId }).select('_id');
+    const repoIds = userRepositories.map(r => r._id);
+
+    // Get PRs where user is the recipient (to field) OR where the PR is for a repo they own
+    const prs = await PullRequestModel.find({
+      $or: [
+        { to: req.user.userId },
+        { repository: { $in: repoIds } }
+      ]
+    })
+      .populate([
+        { path: 'author', select: 'name email profileImage' },
+        { path: 'from', select: 'name email profileImage' },
+        { path: 'to', select: 'name email profileImage' },
+        { path: 'repository', select: 'title owner' }
+      ])
+      .sort({ createdAt: -1 });
+
+    res.json({ message: 'Received pull requests', payload: prs });
   } catch (err) {
     res.status(500).json({ message: 'Error fetching pull requests', reason: err.message });
   }
@@ -392,54 +422,24 @@ pullRequestRouter.post('/', authMiddleware, async (req, res) => {
   }
 });
 
-// ===== LEGACY: Get PRs sent by current user =====
-pullRequestRouter.get('/sent', authMiddleware, async (req, res) => {
+// ===== Get PR details =====
+pullRequestRouter.get('/:prId', async (req, res) => {
   try {
-    const prs = await PullRequestModel.find({ 
-      $or: [
-        { author: req.user.userId },
-        { from: req.user.userId }
-      ]
-    })
-      .populate([
-        { path: 'author', select: 'name email profileImage' },
-        { path: 'from', select: 'name email profileImage' },
-        { path: 'to', select: 'name email profileImage' },
-        { path: 'repository', select: 'title' }
-      ])
-      .sort({ createdAt: -1 });
+    const pr = await PullRequestModel.findById(req.params.prId)
+      .populate('author', 'name email profileImage')
+      .populate('repository', 'title owner')
+      .populate('reviews.reviewer', 'name email profileImage')
+      .populate('comments.author', 'name email profileImage')
+      .populate('mergedBy', 'name email profileImage')
+      .populate('closedBy', 'name email profileImage');
 
-    res.json({ message: 'Sent pull requests', payload: prs });
+    if (!pr) {
+      return res.status(404).json({ message: 'Pull request not found' });
+    }
+
+    res.json({ message: 'Pull request retrieved', payload: pr });
   } catch (err) {
-    res.status(500).json({ message: 'Error fetching pull requests', reason: err.message });
-  }
-});
-
-// ===== LEGACY: Get PRs received by current user =====
-pullRequestRouter.get('/received', authMiddleware, async (req, res) => {
-  try {
-    // First, find all repositories owned by the user
-    const userRepositories = await RepositoryModel.find({ owner: req.user.userId }).select('_id');
-    const repoIds = userRepositories.map(r => r._id);
-
-    // Get PRs where user is the recipient (to field) OR where the PR is for a repo they own
-    const prs = await PullRequestModel.find({
-      $or: [
-        { to: req.user.userId },
-        { repository: { $in: repoIds } }
-      ]
-    })
-      .populate([
-        { path: 'author', select: 'name email profileImage' },
-        { path: 'from', select: 'name email profileImage' },
-        { path: 'to', select: 'name email profileImage' },
-        { path: 'repository', select: 'title owner' }
-      ])
-      .sort({ createdAt: -1 });
-
-    res.json({ message: 'Received pull requests', payload: prs });
-  } catch (err) {
-    res.status(500).json({ message: 'Error fetching pull requests', reason: err.message });
+    res.status(500).json({ message: 'Error fetching pull request', reason: err.message });
   }
 });
 
