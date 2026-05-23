@@ -45,6 +45,11 @@ app.use(cors({
 app.use(express.json())
 app.use(cookieParser())
 
+// Health check endpoint
+app.get('/', (req, res) => {
+  res.json({ message: 'GitHub Clone API is running', status: 'OK' })
+})
+
 // Middleware to apply auth only to write operations (POST, PUT, DELETE)
 // Reads cookies from frontend automatically, no bearer token needed
 const authForWriteOps = (req, res, next) => {
