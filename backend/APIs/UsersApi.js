@@ -30,7 +30,8 @@ userRoute.post('/login', async (req, res, next) => {
   res.cookie("token", token, {
     httpOnly: true,
     sameSite: "lax",
-    secure: false
+    secure: process.env.NODE_ENV === 'production' || process.env.RENDER === 'true', // Use secure in production
+    maxAge: 24 * 60 * 60 * 1000 // 24 hours
   })
 
   res.status(200).json({

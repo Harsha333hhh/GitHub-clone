@@ -15,6 +15,8 @@ axiosInstance.interceptors.request.use(
     const token = localStorage.getItem('token');
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
+    } else {
+      console.warn('No token found in localStorage for request to:', config.url);
     }
     return config;
   },
@@ -33,12 +35,19 @@ axiosInstance.interceptors.response.use(
     if (error.response?.status === 401 && !is401HandlingInProgress) {
       const url = error.config?.url || '';
       
+      console.error('401 Unauthorized from:', url);
+      console.error('Response:', error.response?.data);
+      console.error('Token in localStorage:', !!localStorage.getItem('token'));
+      
       // Don't clear auth for notification API - it's non-critical
       if (url.includes('notification-api')) {
+        console.warn('Ignoring 401 from notification-api (non-critical)');
         return Promise.reject(error);
       }
       
       is401HandlingInProgress = true;
+      
+      console.warn('Clearing authentication due to 401 from:', url);
       
       // Clear auth data if token is expired (for critical APIs only)
       localStorage.removeItem('token');
