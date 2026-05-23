@@ -7,7 +7,7 @@ const articleSchema = new Schema({
   },
   description:{
     type:String,
-    required:[true,"Description is required"]
+    default:""
   },
   //owner is user id of the user who created the article
   owner:{

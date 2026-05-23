@@ -50,6 +50,7 @@ repositoryRoute.post('/repositories',async(req,res)=>{
         // send res
         res.status(201).json({message:"Repository created successfully",payload:createdrepository})
     } catch (err) {
+        console.error("Repository creation error:", err.message, err.errors);
         res.status(500).json({message:"Error creating repository",reason:err.message})
     }
 })
