@@ -28,11 +28,19 @@ let is401HandlingInProgress = false;
 axiosInstance.interceptors.response.use(
   (response) => response,
   (error) => {
-    // Only handle 401 once to avoid infinite loops
+    // Only handle 401 for critical endpoints, not for notification API
+    // This prevents notification API failures from logging out the user
     if (error.response?.status === 401 && !is401HandlingInProgress) {
+      const url = error.config?.url || '';
+      
+      // Don't clear auth for notification API - it's non-critical
+      if (url.includes('notification-api')) {
+        return Promise.reject(error);
+      }
+      
       is401HandlingInProgress = true;
       
-      // Clear auth data if token is expired
+      // Clear auth data if token is expired (for critical APIs only)
       localStorage.removeItem('token');
       localStorage.removeItem('user');
       delete axiosInstance.defaults.headers.common['Authorization'];

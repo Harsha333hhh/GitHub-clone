@@ -14,28 +14,12 @@ function CreateRepo() {
   });
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
-  const { isAuthenticated, currentUser, syncAuthState } = useAuth();
+  const { syncAuthState } = useAuth();
 
   useEffect(() => {
-    // Sync auth state to ensure we have the latest data from localStorage
+    // Sync auth state on component mount
     syncAuthState();
   }, [syncAuthState]);
-
-  // Separate effect to check authentication and redirect if needed
-  useEffect(() => {
-    const checkAuth = async () => {
-      // Wait a moment for syncAuthState to complete
-      await new Promise(resolve => setTimeout(resolve, 50));
-      
-      const authState = useAuth.getState();
-      if (!authState.isAuthenticated || !authState.token) {
-        alert("Please log in first to create a repository");
-        navigate('/login');
-      }
-    };
-    
-    checkAuth();
-  }, [navigate]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
