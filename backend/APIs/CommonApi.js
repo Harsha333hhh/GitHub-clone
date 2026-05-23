@@ -10,22 +10,6 @@ const cookieOptions = {
     sameSite: "lax",
     secure: isProd,
 };
-// login
-commonRouter.post("/login",async(req,res)=>{
-    let userCred=req.body;
-    let {token,user}=await authenticate(userCred);
-    //save token as http only cookie 
-        res.cookie("token",token,cookieOptions)
-    // send res 
-    res.status(200).json({message:"Login successful",token,payload:user})
-
-})
-// logout
-commonRouter.post("/logout",async(req,res)=>{
-    res.clearCookie('token', cookieOptions)// must match original cookie options
-  res.status(200).json({ message: 'Logout successful' })
-})
-
 
 // password change 
 
