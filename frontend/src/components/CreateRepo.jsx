@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axiosInstance from '../api/axiosConfig';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../store/authStore';
 import { Info, Lock, Globe, GitBranch } from 'lucide-react';
 
 function CreateRepo() {
@@ -12,17 +13,28 @@ function CreateRepo() {
     status: 'active'
   });
   const [loading, setLoading] = useState(false);
-  const [user, setUser] = useState(null);
   const navigate = useNavigate();
+  const { isAuthenticated, currentUser, syncAuthState } = useAuth();
 
   useEffect(() => {
-    const loggedInUser = JSON.parse(localStorage.getItem('user'));
-    if (!loggedInUser) {
-      alert("Please log in first to create a repository");
-      navigate('/login');
-      return;
-    }
-    setUser(loggedInUser);
+    // Sync auth state to ensure we have the latest data from localStorage
+    syncAuthState();
+  }, [syncAuthState]);
+
+  // Separate effect to check authentication and redirect if needed
+  useEffect(() => {
+    const checkAuth = async () => {
+      // Wait a moment for syncAuthState to complete
+      await new Promise(resolve => setTimeout(resolve, 50));
+      
+      const authState = useAuth.getState();
+      if (!authState.isAuthenticated || !authState.token) {
+        alert("Please log in first to create a repository");
+        navigate('/login');
+      }
+    };
+    
+    checkAuth();
   }, [navigate]);
 
   const handleSubmit = async (e) => {

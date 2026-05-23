@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import axiosInstance from '../api/axiosConfig';
+import { useAuth } from '../store/authStore';
 import { Link } from 'react-router-dom';
 import { Book, Plus, History, Star, GitBranch, Search, Bell, Bookmark, ArrowRight } from 'lucide-react';
 
@@ -8,8 +9,12 @@ function Dashboard() {
   const [allRepos, setAllRepos] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [loading, setLoading] = useState(true);
-  
-  const user = JSON.parse(localStorage.getItem('user'));
+  const { currentUser, syncAuthState } = useAuth();
+
+  useEffect(() => {
+    // Sync auth state to ensure we have the latest user data
+    syncAuthState();
+  }, [syncAuthState]);
 
   useEffect(() => {
     const fetchDashboardData = async () => {
@@ -19,8 +24,8 @@ function Dashboard() {
         setAllRepos(allReposRes.data.payload || []);
 
         // Fetch only the current user's repos for the sidebar
-        if (user?._id) {
-          const myReposRes = await axiosInstance.get(`/repository-api/repositories/user/${user._id}`);
+        if (currentUser?._id) {
+          const myReposRes = await axiosInstance.get(`/repository-api/repositories/user/${currentUser._id}`);
           setMyRepos(myReposRes.data.payload || []);
         }
       } catch (err) {
@@ -31,7 +36,7 @@ function Dashboard() {
     };
 
     fetchDashboardData();
-  }, []);
+  }, [currentUser?._id]);
 
   const SkeletonCard = () => (
     <div style={{
