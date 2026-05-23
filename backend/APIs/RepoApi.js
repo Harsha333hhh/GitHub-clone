@@ -54,7 +54,7 @@ repositoryRoute.post('/repositories',async(req,res)=>{
     }
 })
 
-// read all repositories by user id 
+// read all repositories by user id (SPECIFIC ROUTE - must come BEFORE generic :userId route)
 repositoryRoute.get('/repositories/user/:userId',async(req,res)=>{
     try {
         let userId = req.params.userId;
@@ -70,10 +70,7 @@ repositoryRoute.get('/repositories/user/:userId',async(req,res)=>{
     }
 })
 
-// read repositories by user id (removing duplicate endpoint)
-// repositoryRoute.get('/repositories/user/:userId',async(req,res)=>{ ... })
-
-// read repositories of owner which are active
+// read repositories of owner which are active (GENERIC ROUTE - must come AFTER specific routes)
 repositoryRoute.get('/repositories/:userId',async(req,res)=>{
     try {
         let userId = req.params.userId
