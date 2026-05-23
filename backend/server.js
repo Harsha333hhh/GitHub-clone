@@ -16,12 +16,14 @@ dotenv.config()
 
 // create http server
 const app = express()
-const port = 4000
+const port = process.env.PORT || 4000
+const mongodbUri = process.env.MONGODB_URI || 'mongodb://localhost:27017/GitHub'
+const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173'
 
 // Connect to MongoDB database
 async function connectDB() {
   try {
-    await connect('mongodb://localhost:27017/GitHub')
+    await connect(mongodbUri)
     console.log('Connected to DB')
     app.listen(port, () => console.log(`server listening to port ${port}...`))
   } catch (err) {
@@ -33,7 +35,7 @@ async function connectDB() {
 connectDB()
 
 app.use(cors({
-  origin: ['http://localhost:5173', 'http://localhost:5174'], 
+  origin: [frontendUrl, 'http://localhost:5173', 'http://localhost:5174'], 
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE'],
   allowedHeaders: ['Content-Type', 'Authorization']

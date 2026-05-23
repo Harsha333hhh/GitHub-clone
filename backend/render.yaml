@@ -1,0 +1,19 @@
+{
+  "buildCommand": "npm install",
+  "startCommand": "npm start",
+  "envs": {
+    "MONGODB_URI": {
+      "description": "MongoDB Atlas connection string"
+    },
+    "JWT_SECRET": {
+      "description": "JWT secret for token signing"
+    },
+    "NODE_ENV": {
+      "description": "Node environment",
+      "value": "production"
+    },
+    "FRONTEND_URL": {
+      "description": "Frontend URL for CORS"
+    }
+  }
+}

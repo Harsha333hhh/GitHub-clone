@@ -2,7 +2,9 @@ import React, { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import axiosInstance from '../api/axiosConfig';
 import { useAuth } from '../store/authStore.js';
-import { Folder, FileText, GitBranch, Clock, Star, Eye, Plus, X, Save, FileCode, Trash2, GitPullRequest, Download } from 'lucide-react';
+import { Folder, FileText, GitBranch, Clock, Star, Eye, Plus, X, Save, FileCode, Trash2, GitPullRequest, Download, Users } from 'lucide-react';
+import Collaborate from './Collaborate';
+import PRList from './PRList';
 
 function RepoExplorer() {
   const { repoId } = useParams();
@@ -11,6 +13,7 @@ function RepoExplorer() {
   const [files, setFiles] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [activeTab, setActiveTab] = useState('files'); // 'files' or 'collaborate'
 
   // Add file state
   const [showEditor, setShowEditor] = useState(false);
@@ -384,15 +387,130 @@ function RepoExplorer() {
         </div>
       )}
 
-      {/* Description */}
-      {repoInfo?.description && (
-        <p style={{ fontSize: '14px', color: 'var(--fg-muted)', marginBottom: '20px', maxWidth: '600px' }}>
-          {repoInfo.description}
-        </p>
-      )}
+      {/* Tab Navigation */}
+      <div style={{
+        display: 'flex',
+        gap: '0',
+        marginBottom: '20px',
+        borderBottom: '2px solid var(--border-default)',
+        position: 'relative'
+      }}>
+        <button
+          onClick={() => setActiveTab('files')}
+          style={{
+            padding: '12px 16px',
+            fontSize: '14px',
+            fontWeight: activeTab === 'files' ? '600' : '500',
+            background: 'none',
+            border: 'none',
+            cursor: 'pointer',
+            color: activeTab === 'files' ? 'var(--accent-primary)' : 'var(--fg-muted)',
+            borderBottom: activeTab === 'files' ? '3px solid var(--accent-primary)' : 'none',
+            marginBottom: '-2px',
+            transition: 'all var(--transition-fast)',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '6px',
+            fontFamily: 'inherit'
+          }}
+          onMouseEnter={(e) => {
+            if (activeTab !== 'files') {
+              e.currentTarget.style.color = 'var(--fg-default)';
+            }
+          }}
+          onMouseLeave={(e) => {
+            if (activeTab !== 'files') {
+              e.currentTarget.style.color = 'var(--fg-muted)';
+            }
+          }}
+        >
+          <FileText size={16} />
+          Files
+        </button>
 
-      {/* ── New File Editor ── */}
-      {showEditor && canWrite && (
+        {/* Collaborate tab - visible to owner only */}
+        {isOwner && (
+          <button
+            onClick={() => setActiveTab('collaborate')}
+            style={{
+              padding: '12px 16px',
+              fontSize: '14px',
+              fontWeight: activeTab === 'collaborate' ? '600' : '500',
+              background: 'none',
+              border: 'none',
+              cursor: 'pointer',
+              color: activeTab === 'collaborate' ? 'var(--accent-primary)' : 'var(--fg-muted)',
+              borderBottom: activeTab === 'collaborate' ? '3px solid var(--accent-primary)' : 'none',
+              marginBottom: '-2px',
+              transition: 'all var(--transition-fast)',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+              fontFamily: 'inherit'
+            }}
+            onMouseEnter={(e) => {
+              if (activeTab !== 'collaborate') {
+                e.currentTarget.style.color = 'var(--fg-default)';
+              }
+            }}
+            onMouseLeave={(e) => {
+              if (activeTab !== 'collaborate') {
+                e.currentTarget.style.color = 'var(--fg-muted)';
+              }
+            }}
+          >
+            <Users size={16} />
+            Collaborate
+          </button>
+        )}
+
+        {/* Pull Requests tab */}
+        <button
+          onClick={() => setActiveTab('pullrequests')}
+          style={{
+            padding: '12px 16px',
+            fontSize: '14px',
+            fontWeight: activeTab === 'pullrequests' ? '600' : '500',
+            background: 'none',
+            border: 'none',
+            cursor: 'pointer',
+            color: activeTab === 'pullrequests' ? 'var(--accent-primary)' : 'var(--fg-muted)',
+            borderBottom: activeTab === 'pullrequests' ? '3px solid var(--accent-primary)' : 'none',
+            marginBottom: '-2px',
+            transition: 'all var(--transition-fast)',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '6px',
+            fontFamily: 'inherit'
+          }}
+          onMouseEnter={(e) => {
+            if (activeTab !== 'pullrequests') {
+              e.currentTarget.style.color = 'var(--fg-default)';
+            }
+          }}
+          onMouseLeave={(e) => {
+            if (activeTab !== 'pullrequests') {
+              e.currentTarget.style.color = 'var(--fg-muted)';
+            }
+          }}
+        >
+          <GitPullRequest size={16} />
+          Pull Requests
+        </button>
+      </div>
+
+      {/* Files Tab Content */}
+      {activeTab === 'files' && (
+        <>
+          {/* Description */}
+          {repoInfo?.description && (
+            <p style={{ fontSize: '14px', color: 'var(--fg-muted)', marginBottom: '20px', maxWidth: '600px' }}>
+              {repoInfo.description}
+            </p>
+          )}
+
+          {/* ── New File Editor ── */}
+          {showEditor && canWrite && (
         <div className="animate-slide-down" style={{
           border: '1px solid var(--accent-primary)', borderRadius: 'var(--radius-lg)',
           overflow: 'hidden', background: 'var(--bg-default)', marginBottom: '20px',
@@ -647,6 +765,37 @@ function RepoExplorer() {
           </div>
         )}
       </div>
+        </>
+      )}
+
+      {/* Collaborate Tab Content */}
+      {activeTab === 'collaborate' && (
+        <Collaborate 
+          repoId={repoId} 
+          repoInfo={repoInfo}
+          isOwner={isOwner}
+          onCollaboratorsUpdate={(updatedCollaborators) => {
+            // Update the repoInfo with the new collaborators list
+            setRepoInfo(prev => ({
+              ...prev,
+              collaborators: updatedCollaborators
+            }));
+          }}
+        />
+      )}
+
+      {/* Pull Requests Tab Content */}
+      {activeTab === 'pullrequests' && (
+        <PRList 
+          repoId={repoId} 
+          repoInfo={repoInfo}
+          isOwner={isOwner}
+          onCreateNew={() => {
+            // TODO: Open PR creation modal/dialog
+            alert('PR creation coming soon! For now, collaborate and propose changes.');
+          }}
+        />
+      )}
     </div>
   );
 }

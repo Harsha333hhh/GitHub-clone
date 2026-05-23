@@ -20,6 +20,7 @@ import PullRequests from './components/PullRequests';
 import Issues from './components/Issues';
 import Marketplace from './components/Marketplace';
 import Customization from './components/Customization';
+import PRDetail from './components/PRDetail';
 
 // Error Page
 const ErrorPage = () => (
@@ -137,6 +138,14 @@ function App() {
               }>
                 <FileViewer />
               </React.Suspense>
+            </ProtectedRoute>
+          )
+        },
+        {
+          path: "repo/:repoId/pr/:prId",
+          element: (
+            <ProtectedRoute>
+              <PRDetail />
             </ProtectedRoute>
           )
         }

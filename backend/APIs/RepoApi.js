@@ -1,5 +1,7 @@
 import express from 'express'
 import { RepositoryModel } from '../Models/RepositoryModel.js';
+import { UserModel } from '../Models/UserModel.js';
+import { authMiddleware } from '../Middlewares/authMiddleware.js';
 
 export const repositoryRoute = express.Router()
 
@@ -145,3 +147,126 @@ repositoryRoute.post('/repositories/:repositoryId/comments',async(req,res)=>{
         res.status(500).json({message:"Error adding comment",reason:err.message})
     }
 })
+
+// Add collaborator by email (OWNER ONLY)
+repositoryRoute.post('/repositories/:repositoryId/collaborators', authMiddleware, async (req, res) => {
+    try {
+        const { email } = req.body;
+        const repositoryId = req.params.repositoryId;
+        const userId = req.user.userId;
+
+        // Validate input
+        if (!email) {
+            return res.status(400).json({ message: "Email is required" });
+        }
+
+        // Find repository
+        const repository = await RepositoryModel.findById(repositoryId);
+        if (!repository) {
+            return res.status(404).json({ message: "Repository not found" });
+        }
+
+        // Check if user is owner
+        if (repository.owner.toString() !== userId) {
+            return res.status(403).json({ message: "Only the repository owner can add collaborators" });
+        }
+
+        // Find user by email
+        const user = await UserModel.findOne({ email: email.toLowerCase() });
+        if (!user) {
+            return res.status(404).json({ message: "User with this email does not exist" });
+        }
+
+        // Check if user is already a collaborator
+        if (repository.collaborators.some(collab => collab.toString() === user._id.toString())) {
+            return res.status(400).json({ message: "User is already a collaborator" });
+        }
+
+        // Check if user is owner
+        if (repository.owner.toString() === user._id.toString()) {
+            return res.status(400).json({ message: "User is already the owner" });
+        }
+
+        // Add collaborator
+        repository.collaborators.push(user._id);
+        await repository.save();
+
+        // Populate and return updated repository
+        const updatedRepo = await RepositoryModel.findById(repositoryId)
+            .populate('owner', 'name email profileImage')
+            .populate('collaborators', 'name email profileImage');
+
+        res.status(200).json({ 
+            message: "Collaborator added successfully", 
+            payload: updatedRepo 
+        });
+    } catch (err) {
+        res.status(500).json({ message: "Error adding collaborator", reason: err.message });
+    }
+});
+
+// Remove collaborator (OWNER ONLY)
+repositoryRoute.delete('/repositories/:repositoryId/collaborators/:collaboratorId', authMiddleware, async (req, res) => {
+    try {
+        const { repositoryId, collaboratorId } = req.params;
+        const userId = req.user.userId;
+
+        // Find repository
+        const repository = await RepositoryModel.findById(repositoryId);
+        if (!repository) {
+            return res.status(404).json({ message: "Repository not found" });
+        }
+
+        // Check if user is owner
+        if (repository.owner.toString() !== userId) {
+            return res.status(403).json({ message: "Only the repository owner can remove collaborators" });
+        }
+
+        // Check if collaborator exists
+        const collaboratorIndex = repository.collaborators.findIndex(
+            collab => collab.toString() === collaboratorId
+        );
+
+        if (collaboratorIndex === -1) {
+            return res.status(404).json({ message: "Collaborator not found" });
+        }
+
+        // Remove collaborator
+        repository.collaborators.splice(collaboratorIndex, 1);
+        await repository.save();
+
+        // Populate and return updated repository
+        const updatedRepo = await RepositoryModel.findById(repositoryId)
+            .populate('owner', 'name email profileImage')
+            .populate('collaborators', 'name email profileImage');
+
+        res.status(200).json({ 
+            message: "Collaborator removed successfully", 
+            payload: updatedRepo 
+        });
+    } catch (err) {
+        res.status(500).json({ message: "Error removing collaborator", reason: err.message });
+    }
+});
+
+// Get all collaborators for a repository
+repositoryRoute.get('/repositories/:repositoryId/collaborators', async (req, res) => {
+    try {
+        const { repositoryId } = req.params;
+
+        // Find repository
+        const repository = await RepositoryModel.findById(repositoryId)
+            .populate('collaborators', 'name email profileImage');
+
+        if (!repository) {
+            return res.status(404).json({ message: "Repository not found" });
+        }
+
+        res.status(200).json({ 
+            message: "Collaborators retrieved successfully", 
+            payload: repository.collaborators 
+        });
+    } catch (err) {
+        res.status(500).json({ message: "Error retrieving collaborators", reason: err.message });
+    }
+});
