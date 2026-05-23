@@ -15,8 +15,6 @@ axiosInstance.interceptors.request.use(
     const token = localStorage.getItem('token');
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
-    } else {
-      console.warn('No token found in localStorage for request to:', config.url);
     }
     return config;
   },
@@ -37,7 +35,6 @@ axiosInstance.interceptors.response.use(
       
       console.error('401 Unauthorized from:', url);
       console.error('Response:', error.response?.data);
-      console.error('Token in localStorage:', !!localStorage.getItem('token'));
       
       // Don't clear auth for notification API - it's non-critical
       if (url.includes('notification-api')) {
@@ -53,6 +50,18 @@ axiosInstance.interceptors.response.use(
       localStorage.removeItem('token');
       localStorage.removeItem('user');
       delete axiosInstance.defaults.headers.common['Authorization'];
+      
+      // Dynamically import and call clearAuth from auth store to avoid circular dependencies
+      import('../store/authStore.js').then(({ useAuth }) => {
+        if (useAuth && useAuth.getState && typeof useAuth.getState === 'function') {
+          useAuth.setState({
+            currentUser: null,
+            token: null,
+            isAuthenticated: false,
+            error: 'Session expired. Please login again.'
+          });
+        }
+      }).catch(err => console.error('Failed to update auth store:', err));
       
       // Reset the flag after a brief delay
       setTimeout(() => {

@@ -3,17 +3,20 @@ import { Navigate } from 'react-router-dom';
 import { useAuth } from '../store/authStore';
 
 function ProtectedRoute({ children }) {
-  const { isAuthenticated, currentUser } = useAuth();
+  const { isAuthenticated, currentUser, syncAuthState } = useAuth();
   const [isChecking, setIsChecking] = useState(true);
 
   useEffect(() => {
-    // Give the auth store a moment to sync with localStorage
+    // Sync auth state with localStorage on mount
+    syncAuthState();
+    
+    // Give the auth store a moment to sync with localStorage and verify token
     const timer = setTimeout(() => {
       setIsChecking(false);
-    }, 100);
+    }, 200);
 
     return () => clearTimeout(timer);
-  }, [isAuthenticated, currentUser]);
+  }, [syncAuthState]);
 
   if (isChecking) {
     return (
@@ -46,8 +49,14 @@ function ProtectedRoute({ children }) {
   }
 
   if (!isAuthenticated || !currentUser) {
+    console.warn('User not authenticated, redirecting to login');
     return <Navigate to="/" replace />;
   }
+
+  return children;
+}
+
+export default ProtectedRoute;
 
   return children;
 }

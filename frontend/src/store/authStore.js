@@ -1,7 +1,7 @@
 import { create } from "zustand";
 import axiosInstance from "../api/axiosConfig";
 
-export const useAuth = create((set) => ({
+export const useAuth = create((set, get) => ({
   currentUser: JSON.parse(localStorage.getItem('user')) || null,
   token: localStorage.getItem('token') || null,
   loading: false,
@@ -70,26 +70,30 @@ export const useAuth = create((set) => ({
     });
   },
 
+  // Global logout function - called by auth interceptors
+  clearAuth: () => {
+    localStorage.removeItem('user');
+    localStorage.removeItem('token');
+    delete axiosInstance.defaults.headers.common['Authorization'];
+    
+    set({
+      currentUser: null,
+      token: null,
+      isAuthenticated: false,
+      error: 'Session expired. Please login again.'
+    });
+  },
+
   logout: async () => {
     try {
       set({ loading: true, error: null });
       await axiosInstance.post('/user-api/logout', {});
-      localStorage.removeItem('user');
-      localStorage.removeItem('token');
-      delete axiosInstance.defaults.headers.common['Authorization'];
-      
-      set({ 
-        currentUser: null, 
-        token: null,
-        loading: false, 
-        isAuthenticated: false,
-        error: null 
-      });
+      get().clearAuth();
     } catch (err) {
       console.error("Logout failed", err);
-      localStorage.clear();
-      delete axiosInstance.defaults.headers.common['Authorization'];
-      set({ currentUser: null, token: null, isAuthenticated: false, loading: false });
+      get().clearAuth();
+    } finally {
+      set({ loading: false });
     }
   }
 }));
