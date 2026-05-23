@@ -67,9 +67,18 @@ userRoute.put('/users', authMiddleware, async (req, res, next) => {
 userRoute.get('/users/:username', async (req, res, next) => {
   try {
     const username = req.params.username;
-    const user = await UserModel.findOne({ name: username })
+    // Try exact match first, then case-insensitive search
+    let user = await UserModel.findOne({ name: username })
       .select('-password')
       .populate('repositories');
+    
+    if (!user) {
+      // Try case-insensitive search
+      user = await UserModel.findOne({ name: { $regex: `^${username}$`, $options: 'i' } })
+        .select('-password')
+        .populate('repositories');
+    }
+    
     if (!user) {
       return res.status(404).json({ message: 'User not found' });
     }

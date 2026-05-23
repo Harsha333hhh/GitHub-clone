@@ -72,7 +72,7 @@ function Home() {
           {currentUser?.repositories?.length > 0 ? (
             currentUser.repositories.slice(0, 7).map((repo) => (
               <li key={repo._id}>
-                <Link to={`/repo/${repo._id}`} style={{
+                <Link to={`/dashboard/repo/${repo._id}`} style={{
                   display: 'flex', alignItems: 'center', gap: '8px',
                   padding: '6px 8px', borderRadius: 'var(--radius-md)',
                   fontSize: '13px', color: 'var(--fg-default)', textDecoration: 'none',
@@ -133,7 +133,7 @@ function Home() {
                 <div style={{ marginLeft: '28px' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
                     <Book size={16} style={{ color: 'var(--fg-subtle)' }} />
-                    <Link to={`/repo/${repo._id}`} style={{
+                    <Link to={`/dashboard/repo/${repo._id}`} style={{
                       fontSize: '16px', fontWeight: 700, color: 'var(--accent-primary)', textDecoration: 'none',
                     }}>{repo.title}</Link>
                   </div>

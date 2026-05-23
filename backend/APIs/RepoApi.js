@@ -1,6 +1,7 @@
 import express from 'express'
 import { RepositoryModel } from '../Models/RepositoryModel.js';
 import { UserModel } from '../Models/UserModel.js';
+import { NotificationModel } from '../Models/NotificationModel.js';
 import { authMiddleware } from '../Middlewares/authMiddleware.js';
 
 export const repositoryRoute = express.Router()
@@ -226,6 +227,16 @@ repositoryRoute.post('/repositories/:repositoryId/collaborators', authMiddleware
         // Add collaborator
         repository.collaborators.push(user._id);
         await repository.save();
+
+        // Send notification to the new collaborator
+        const notification = new NotificationModel({
+            recipient: user._id,
+            sender: userId,
+            type: 'collaborator_added',
+            message: `added you as a collaborator on ${repository.title}`,
+            repository: repositoryId
+        });
+        await notification.save();
 
         // Populate and return updated repository
         const updatedRepo = await RepositoryModel.findById(repositoryId)

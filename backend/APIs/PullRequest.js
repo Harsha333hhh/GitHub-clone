@@ -418,17 +418,22 @@ pullRequestRouter.get('/sent', authMiddleware, async (req, res) => {
 // ===== LEGACY: Get PRs received by current user =====
 pullRequestRouter.get('/received', authMiddleware, async (req, res) => {
   try {
+    // First, find all repositories owned by the user
+    const userRepositories = await RepositoryModel.find({ owner: req.user.userId }).select('_id');
+    const repoIds = userRepositories.map(r => r._id);
+
+    // Get PRs where user is the recipient (to field) OR where the PR is for a repo they own
     const prs = await PullRequestModel.find({
       $or: [
         { to: req.user.userId },
-        { $expr: { $eq: [{ $arrayElemAt: ['$repository.owner', 0] }, req.user.userId] } }
+        { repository: { $in: repoIds } }
       ]
     })
       .populate([
         { path: 'author', select: 'name email profileImage' },
         { path: 'from', select: 'name email profileImage' },
         { path: 'to', select: 'name email profileImage' },
-        { path: 'repository', select: 'title' }
+        { path: 'repository', select: 'title owner' }
       ])
       .sort({ createdAt: -1 });
 
