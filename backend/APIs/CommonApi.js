@@ -2,7 +2,7 @@ import exp from "express";
 export const commonRouter=exp.Router();
 import {authenticate} from '../services/authservices.js';
 import { UserModel } from "../Models/UserModel.js";
-import bcrypt from 'bcryptjs';
+import bcrypt from 'bcrypt';
 
 const isProd = process.env.NODE_ENV === "production";
 const cookieOptions = {
