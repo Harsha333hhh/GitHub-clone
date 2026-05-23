@@ -56,7 +56,11 @@ function Header() {
     try {
       const res = await axiosInstance.get('/notification-api/');
       setNotifications(res.data.payload || []);
-    } catch { /* ignore */ }
+    } catch (err) {
+      if (err.response?.status !== 401) {
+        console.error('Failed to fetch notifications:', err.message);
+      }
+    }
   };
 
   const handleBellClick = async () => {
@@ -70,7 +74,11 @@ function Header() {
       await axiosInstance.put('/notification-api/read-all');
       setUnreadCount(0);
       setNotifications(prev => prev.map(n => ({ ...n, read: true })));
-    } catch { /* ignore */ }
+    } catch (err) {
+      if (err.response?.status !== 401) {
+        console.error('Failed to mark notifications as read:', err.message);
+      }
+    }
   };
 
   const handleMarkRead = async (id) => {
@@ -78,7 +86,11 @@ function Header() {
       await axiosInstance.put(`/notification-api/${id}/read`);
       setUnreadCount(prev => Math.max(0, prev - 1));
       setNotifications(prev => prev.map(n => n._id === id ? { ...n, read: true } : n));
-    } catch { /* ignore */ }
+    } catch (err) {
+      if (err.response?.status !== 401) {
+        console.error('Failed to mark notification as read:', err.message);
+      }
+    }
   };
 
   const handleLogout = async () => {

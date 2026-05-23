@@ -55,7 +55,7 @@ function RepoExplorer() {
       }
     };
     fetchRepoData();
-  }, [repoId]);
+  }, [repoId, fetchFiles]);
 
   const handleCreateFile = async () => {
     if (!newFileName.trim()) {
