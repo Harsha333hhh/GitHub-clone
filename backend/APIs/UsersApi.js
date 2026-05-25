@@ -88,6 +88,45 @@ userRoute.get('/users/:username', async (req, res, next) => {
   }
 });
 
+// Update profile picture (accepts base64 image)
+userRoute.post('/upload-profile-picture', authMiddleware, async (req, res, next) => {
+  try {
+    const userId = req.user.userId;
+    const { profileImage } = req.body;
+
+    if (!profileImage) {
+      return res.status(400).json({ message: 'Profile image is required' });
+    }
+
+    // Validate it's a base64 image
+    if (!profileImage.startsWith('data:image/')) {
+      return res.status(400).json({ message: 'Invalid image format. Please upload a valid image.' });
+    }
+
+    // Optional: Check file size (limit to 2MB)
+    const base64Data = profileImage.split(',')[1];
+    const fileSizeInBytes = Buffer.byteLength(base64Data, 'base64');
+    const fileSizeInMB = fileSizeInBytes / (1024 * 1024);
+
+    if (fileSizeInMB > 2) {
+      return res.status(400).json({ message: 'Image size must be less than 2MB' });
+    }
+
+    const updatedUser = await UserModel.findByIdAndUpdate(
+      userId,
+      { profileImage },
+      { new: true }
+    ).select('-password');
+
+    res.status(200).json({ 
+      message: 'Profile picture updated successfully', 
+      user: updatedUser 
+    });
+  } catch (err) {
+    next(err);
+  }
+});
+
 // delete user
 userRoute.delete('/delete', authMiddleware, async (req, res, next) => {
   try {
