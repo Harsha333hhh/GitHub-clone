@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import axiosInstance from '../api/axiosConfig';
 import { useAuth } from '../store/authStore.js';
-import { Folder, FileText, GitBranch, Clock, Star, Eye, Plus, X, Save, FileCode, Trash2, GitPullRequest, Download, Users } from 'lucide-react';
+import { Folder, FileText, GitBranch, Clock, Star, Eye, Plus, X, Save, FileCode, Trash2, GitPullRequest, Download, Users, Edit } from 'lucide-react';
 import Collaborate from './Collaborate';
 import PRList from './PRList';
 
@@ -26,6 +26,12 @@ function RepoExplorer() {
   const [uploading, setUploading] = useState(false);
   const [requestingAccess, setRequestingAccess] = useState(false);
   const [accessMessage, setAccessMessage] = useState('');
+
+  // Edit file state
+  const [editingFileId, setEditingFileId] = useState(null);
+  const [editingFileName, setEditingFileName] = useState('');
+  const [editingFileContent, setEditingFileContent] = useState('');
+  const [editingSaving, setEditingSaving] = useState(false);
 
   // Permissions
   const isOwner = isAuthenticated && repoInfo?.owner && currentUser?._id === repoInfo.owner._id;
@@ -92,6 +98,42 @@ function RepoExplorer() {
     } catch (err) {
       console.error("Error deleting file:", err);
       alert(err.response?.data?.message || 'Failed to delete file');
+    }
+  };
+
+  const handleEditFile = async (file) => {
+    setEditingFileId(file._id);
+    setEditingFileName(file.fileName || file.name);
+    // Fetch the full file content
+    try {
+      const res = await axiosInstance.get(`/file-api/${repoId}`, {
+        params: { path: file.fileName || file.name },
+      });
+      setEditingFileContent(res.data.content || '');
+    } catch (err) {
+      console.error("Error fetching file content:", err);
+      setEditingFileContent(file.content || '');
+    }
+  };
+
+  const handleSaveEditedFile = async () => {
+    if (!editingFileId) return;
+    setEditingSaving(true);
+    try {
+      await axiosInstance.put(`/file-api/files/${editingFileId}`, {
+        fileName: editingFileName,
+        content: editingFileContent,
+      });
+      await fetchFiles();
+      setEditingFileId(null);
+      setEditingFileName('');
+      setEditingFileContent('');
+      alert('File updated successfully');
+    } catch (err) {
+      console.error("Error updating file:", err);
+      alert(err.response?.data?.message || 'Failed to update file');
+    } finally {
+      setEditingSaving(false);
     }
   };
 
@@ -658,6 +700,121 @@ function RepoExplorer() {
         </div>
       )}
 
+      {/* Edit File Modal */}
+      {editingFileId && (
+        <div className="animate-slide-down" style={{
+          border: '1px solid var(--border-default)', borderRadius: 'var(--radius-lg)',
+          overflow: 'hidden', background: 'var(--bg-default)', marginBottom: '20px',
+          boxShadow: '0 0 0 1px rgba(88,166,255,0.2)',
+        }}>
+          {/* Editor Header */}
+          <div style={{
+            display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+            padding: '12px 16px', background: 'var(--bg-subtle)',
+            borderBottom: '1px solid var(--border-default)',
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <FileCode size={16} style={{ color: 'var(--accent-primary)' }} />
+              <span style={{ fontSize: '14px', fontWeight: 600, color: 'var(--fg-default)' }}>Edit file</span>
+            </div>
+            <button onClick={() => setEditingFileId(null)}
+              style={{
+                display: 'flex', alignItems: 'center', padding: '4px',
+                background: 'none', border: 'none', cursor: 'pointer',
+                color: 'var(--fg-subtle)', borderRadius: '4px',
+                transition: 'color var(--transition-fast)',
+              }}
+              onMouseEnter={e => e.currentTarget.style.color = 'var(--fg-default)'}
+              onMouseLeave={e => e.currentTarget.style.color = 'var(--fg-subtle)'}
+            >
+              <X size={18} />
+            </button>
+          </div>
+
+          {/* Content Editor */}
+          <div style={{ position: 'relative' }}>
+            <div style={{
+              padding: '8px 16px', fontSize: '12px', color: 'var(--fg-muted)',
+              background: 'var(--bg-subtle)', borderBottom: '1px solid var(--border-muted)',
+              display: 'flex', alignItems: 'center', gap: '12px',
+            }}>
+              <span style={{
+                padding: '4px 10px', fontSize: '11px', fontWeight: 600,
+                background: 'var(--bg-default)', border: '1px solid var(--border-default)',
+                borderRadius: 'var(--radius-md)', color: 'var(--fg-default)',
+              }}>Edit</span>
+              <span style={{ fontSize: '12px', color: 'var(--fg-subtle)' }}>
+                {editingFileContent.split('\n').length} lines · {(new Blob([editingFileContent]).size / 1024).toFixed(2)} KB
+              </span>
+            </div>
+
+            <textarea
+              value={editingFileContent}
+              onChange={e => setEditingFileContent(e.target.value)}
+              placeholder="File content..."
+              spellCheck={false}
+              style={{
+                width: '100%', minHeight: '300px', padding: '16px',
+                background: 'var(--bg-canvas)', border: 'none',
+                color: 'var(--fg-default)', fontSize: '13px',
+                fontFamily: '"Fira Code", "Cascadia Code", monospace',
+                lineHeight: 1.6, resize: 'vertical', outline: 'none',
+                tabSize: 2,
+              }}
+              onKeyDown={e => {
+                if (e.key === 'Tab') {
+                  e.preventDefault();
+                  const start = e.target.selectionStart;
+                  const end = e.target.selectionEnd;
+                  const value = e.target.value;
+                  setEditingFileContent(value.substring(0, start) + '  ' + value.substring(end));
+                  setTimeout(() => { e.target.selectionStart = e.target.selectionEnd = start + 2; }, 0);
+                }
+              }}
+            />
+          </div>
+
+          {/* Footer: Save area */}
+          <div style={{
+            padding: '16px', background: 'var(--bg-subtle)',
+            borderTop: '1px solid var(--border-default)',
+            display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px',
+          }}>
+            <p style={{ fontSize: '12px', color: 'var(--fg-muted)' }}>
+              Editing: {editingFileName}
+            </p>
+            <div style={{ display: 'flex', gap: '8px' }}>
+              <button onClick={() => setEditingFileId(null)}
+                style={{
+                  padding: '8px 16px', fontSize: '13px', fontWeight: 600,
+                  background: 'var(--bg-default)', border: '1px solid var(--border-default)',
+                  borderRadius: 'var(--radius-md)', color: 'var(--fg-default)',
+                  cursor: 'pointer', transition: 'all var(--transition-fast)',
+                  fontFamily: 'inherit',
+                }}
+                onMouseEnter={e => e.currentTarget.style.borderColor = 'var(--fg-subtle)'}
+                onMouseLeave={e => e.currentTarget.style.borderColor = 'var(--border-default)'}
+              >Cancel</button>
+              <button onClick={handleSaveEditedFile} disabled={editingSaving}
+                style={{
+                  display: 'flex', alignItems: 'center', gap: '6px',
+                  padding: '8px 20px', fontSize: '13px', fontWeight: 600,
+                  background: editingSaving ? 'var(--fg-subtle)' : 'var(--success)',
+                  border: 'none', borderRadius: 'var(--radius-md)', color: '#fff',
+                  cursor: editingSaving ? 'not-allowed' : 'pointer',
+                  transition: 'all var(--transition-fast)', fontFamily: 'inherit',
+                }}
+                onMouseEnter={e => { if (!editingSaving) e.currentTarget.style.opacity = '0.85'; }}
+                onMouseLeave={e => { e.currentTarget.style.opacity = '1'; }}
+              >
+                <Save size={14} />
+                {editingSaving ? 'Saving...' : 'Save changes'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* File Tree */}
       <div style={{
         border: '1px solid var(--border-default)', borderRadius: 'var(--radius-lg)',
@@ -719,7 +876,23 @@ function RepoExplorer() {
                 <span style={{ fontSize: '12px', color: 'var(--fg-subtle)' }}>
                   {file.updatedAt ? new Date(file.updatedAt).toLocaleDateString() : ''}
                 </span>
-                {/* Only show delete button for owner */}
+                {/* Edit button for owner and collaborators */}
+                {(isOwner || isCollaborator) && (
+                  <button onClick={() => handleEditFile(file)}
+                    title="Edit file"
+                    style={{
+                      display: 'flex', alignItems: 'center', padding: '4px',
+                      background: 'none', border: 'none', cursor: 'pointer',
+                      color: 'var(--fg-subtle)', borderRadius: '4px',
+                      transition: 'color var(--transition-fast)',
+                    }}
+                    onMouseEnter={e => e.currentTarget.style.color = 'var(--accent-primary)'}
+                    onMouseLeave={e => e.currentTarget.style.color = 'var(--fg-subtle)'}
+                  >
+                    <Edit size={14} />
+                  </button>
+                )}
+                {/* Delete button for owner */}
                 {isOwner && (
                   <button onClick={() => handleDeleteFile(file._id)}
                     title="Delete file"
