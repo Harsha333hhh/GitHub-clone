@@ -2,7 +2,7 @@
 
 This is the Single Page Application (SPA) client interface for the full-stack GitHub Clone ecosystem. Built as a high-performance developer hub, it leverages modern React primitives compiled natively via Vite for near-instant Hot Module Replacement (HMR) and optimized build times.
 
-## 🛠 Tech Stack & Ecosystem
+##  Tech Stack & Ecosystem
 
 - **Build Engine & Tooling:** [Vite](https://vite.dev/) (React configuration variant)
 - **Core UI Layer:** React.js (Hooks, Context Providers, and Declarative SPA Layouts)
@@ -14,7 +14,6 @@ This is the Single Page Application (SPA) client interface for the full-stack Gi
 
 ##  Workspace Directory Structure
 
-```text
 frontend/
 ├── public/                  # Static standalone public assets (favicon, site vectors)
 └── src/
