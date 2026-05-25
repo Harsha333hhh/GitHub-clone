@@ -14,8 +14,13 @@ function Header() {
   const [notifOpen, setNotifOpen] = React.useState(false);
   const [notifications, setNotifications] = React.useState([]);
   const [unreadCount, setUnreadCount] = React.useState(0);
+  const [searchQuery, setSearchQuery] = React.useState('');
+  const [searchResults, setSearchResults] = React.useState([]);
+  const [searchOpen, setSearchOpen] = React.useState(false);
   const dropdownRef = React.useRef(null);
   const notifRef = React.useRef(null);
+  const searchRef = React.useRef(null);
+  const searchInputRef = React.useRef(null);
 
   // Close dropdowns when clicking outside
   React.useEffect(() => {
@@ -26,10 +31,55 @@ function Header() {
       if (notifRef.current && !notifRef.current.contains(e.target)) {
         setNotifOpen(false);
       }
+      if (searchRef.current && !searchRef.current.contains(e.target)) {
+        setSearchOpen(false);
+      }
     };
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
+
+  // Handle "/" key to focus search bar
+  React.useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.key === '/' && document.activeElement.tagName !== 'INPUT') {
+        e.preventDefault();
+        searchInputRef.current?.focus();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
+
+  // Search functionality
+  const handleSearch = async (query) => {
+    setSearchQuery(query);
+    if (!query.trim()) {
+      setSearchResults([]);
+      setSearchOpen(false);
+      return;
+    }
+
+    try {
+      const res = await axiosInstance.get('/repository-api/repositories');
+      const allRepos = res.data.payload || [];
+      const filtered = allRepos.filter(repo =>
+        repo.title.toLowerCase().includes(query.toLowerCase()) ||
+        repo.description?.toLowerCase().includes(query.toLowerCase())
+      ).slice(0, 8);
+      setSearchResults(filtered);
+      setSearchOpen(true);
+    } catch (err) {
+      console.error('Search error:', err);
+    }
+  };
+
+  const handleSearchSelect = (repoId) => {
+    navigate(`/dashboard/repo/${repoId}`);
+    setSearchQuery('');
+    setSearchResults([]);
+    setSearchOpen(false);
+  };
 
   // Fetch unread count periodically
   React.useEffect(() => {
@@ -125,7 +175,7 @@ function Header() {
         backdropFilter: 'blur(20px) saturate(180%)',
         WebkitBackdropFilter: 'blur(20px) saturate(180%)',
         borderBottom: '1px solid var(--border-default)',
-        padding: '0 24px',
+        padding: '0 max(12px, calc(100vw * 0.02))',
         height: '64px',
         display: 'flex',
         alignItems: 'center',
@@ -133,7 +183,7 @@ function Header() {
       }}
     >
       {/* Left Section */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: '20px', flex: 1 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 'max(8px, 3vw)', flex: 1 }}>
         <Link to="/dashboard" style={{ color: 'var(--fg-default)', display: 'flex', alignItems: 'center', transition: 'transform 0.2s ease' }}
           onMouseEnter={e => e.currentTarget.style.transform = 'scale(1.1)'}
           onMouseLeave={e => e.currentTarget.style.transform = 'scale(1)'}
@@ -141,12 +191,20 @@ function Header() {
           <Github size={32} />
         </Link>
 
-        {/* Search Bar */}
-        <div style={{ position: 'relative' }} className="header-search">
+        {/* Search Bar - Hidden on mobile, visible on tablet+ */}
+        <div ref={searchRef} style={{ position: 'relative', display: window.innerWidth < 768 ? 'none' : 'block', flex: 1 }} className="header-search">
           <Search size={14} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--fg-subtle)' }} />
           <input
+            ref={searchInputRef}
             type="text"
             placeholder="Type / to search..."
+            value={searchQuery}
+            onChange={(e) => handleSearch(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' && searchResults.length > 0) {
+                handleSearchSelect(searchResults[0]._id);
+              }
+            }}
             style={{
               background: 'var(--bg-canvas)',
               border: '1px solid var(--border-default)',
@@ -154,12 +212,13 @@ function Header() {
               padding: '6px 12px 6px 32px',
               fontSize: '13px',
               color: 'var(--fg-default)',
-              width: '280px',
+              width: '100%',
+              maxWidth: '360px',
               outline: 'none',
               transition: 'all var(--transition-normal)',
             }}
-            onFocus={e => { e.target.style.width = '360px'; e.target.style.borderColor = 'var(--accent-primary)'; e.target.style.boxShadow = '0 0 0 3px rgba(88,166,255,0.15)'; }}
-            onBlur={e => { e.target.style.width = '280px'; e.target.style.borderColor = 'var(--border-default)'; e.target.style.boxShadow = 'none'; }}
+            onFocus={e => { e.target.style.width = '100%'; e.target.style.maxWidth = '420px'; e.target.style.borderColor = 'var(--accent-primary)'; e.target.style.boxShadow = '0 0 0 3px rgba(88,166,255,0.15)'; }}
+            onBlur={e => { e.target.style.width = '100%'; e.target.style.maxWidth = '360px'; e.target.style.borderColor = 'var(--border-default)'; e.target.style.boxShadow = 'none'; }}
           />
           <kbd style={{
             position: 'absolute', right: '8px', top: '50%', transform: 'translateY(-50%)',
@@ -167,10 +226,44 @@ function Header() {
             border: '1px solid var(--border-default)', borderRadius: '4px',
             background: 'var(--bg-subtle)', fontFamily: 'inherit'
           }}>/</kbd>
+
+          {/* Search Results Dropdown */}
+          {searchOpen && searchResults.length > 0 && (
+            <div className="animate-slide-down" style={{
+              position: 'absolute', top: 'calc(100% + 8px)', left: 0, right: 0,
+              background: 'var(--bg-default)',
+              border: '1px solid var(--border-default)',
+              borderRadius: 'var(--radius-lg)', boxShadow: 'var(--shadow-lg)',
+              maxHeight: '300px', overflowY: 'auto',
+              zIndex: 100,
+            }}>
+              {searchResults.map(repo => (
+                <button
+                  key={repo._id}
+                  onClick={() => handleSearchSelect(repo._id)}
+                  style={{
+                    width: '100%', padding: '12px 16px', textAlign: 'left',
+                    background: 'transparent', border: 'none', cursor: 'pointer',
+                    borderBottom: '1px solid var(--border-muted)',
+                    transition: 'background var(--transition-fast)',
+                    fontFamily: 'inherit',
+                    fontSize: '13px',
+                  }}
+                  onMouseEnter={e => e.currentTarget.style.background = 'var(--bg-subtle)'}
+                  onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+                >
+                  <div style={{ fontWeight: 600, color: 'var(--fg-default)', marginBottom: '4px' }}>{repo.title}</div>
+                  <div style={{ fontSize: '12px', color: 'var(--fg-subtle)' }}>
+                    {repo.description || 'No description'}
+                  </div>
+                </button>
+              ))}
+            </div>
+          )}
         </div>
 
-        {/* Nav Links */}
-        <nav style={{ display: 'flex', gap: '4px' }} className="header-nav">
+        {/* Nav Links - Hidden on mobile, visible on desktop */}
+        <nav style={{ display: window.innerWidth < 1024 ? 'none' : 'flex', gap: '4px' }} className="header-nav">
           {[
             { to: '/dashboard/pulls', label: 'Pull requests' },
             { to: '/dashboard/issues', label: 'Issues' },
@@ -189,11 +282,11 @@ function Header() {
       </div>
 
       {/* Right Section */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
         {isAuthenticated ? (
           <>
             <Link to="/dashboard/new" style={{
-              display: 'flex', alignItems: 'center', gap: '2px',
+              display: window.innerWidth < 640 ? 'none' : 'flex', alignItems: 'center', gap: '2px',
               padding: '4px 10px', borderRadius: 'var(--radius-md)',
               border: '1px solid var(--border-default)', color: 'var(--fg-muted)',
               fontSize: '13px', transition: 'all var(--transition-fast)',

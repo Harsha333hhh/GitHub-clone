@@ -71,48 +71,52 @@ function Dashboard() {
     }}>
       <div style={{
         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-        gap: '16px', padding: '18px 20px', marginBottom: '24px',
+        gap: '16px', padding: window.innerWidth < 640 ? '12px 16px' : '18px 20px', marginBottom: '24px',
         background: 'var(--bg-default)', border: '1px solid var(--border-default)',
         borderRadius: 'var(--radius-lg)',
+        flexWrap: window.innerWidth < 640 ? 'wrap' : 'nowrap',
       }}>
         <div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '6px' }}>
             <span style={{
               width: '8px', height: '8px', borderRadius: '50%', background: 'var(--success)'
             }} />
-            <span style={{ fontSize: '12px', color: 'var(--fg-subtle)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em' }}>Dashboard</span>
+            <span style={{ fontSize: window.innerWidth < 640 ? '10px' : '12px', color: 'var(--fg-subtle)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em' }}>Dashboard</span>
           </div>
-          <h1 style={{ fontSize: '24px', fontWeight: 700, color: 'var(--fg-default)', margin: 0 }}>
+          <h1 style={{ fontSize: window.innerWidth < 640 ? '18px' : '24px', fontWeight: 700, color: 'var(--fg-default)', margin: 0 }}>
             Welcome back, {currentUser?.name || 'developer'}
           </h1>
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: window.innerWidth < 640 ? '8px' : '10px', flexWrap: 'wrap', justifyContent: window.innerWidth < 640 ? 'flex-start' : 'flex-end' }}>
           <div style={{
-            display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 14px',
-            minWidth: '260px', background: 'var(--bg-canvas)', border: '1px solid var(--border-default)',
+            display: 'flex', alignItems: 'center', gap: '8px', padding: window.innerWidth < 640 ? '8px 10px' : '10px 14px',
+            minWidth: window.innerWidth < 640 ? 'auto' : '260px', background: 'var(--bg-canvas)', border: '1px solid var(--border-default)',
             borderRadius: 'var(--radius-md)', color: 'var(--fg-subtle)',
           }}>
-            <Search size={14} />
-            <span style={{ fontSize: '13px' }}>Type / to search repositories</span>
+            <Search size={window.innerWidth < 640 ? 12 : 14} />
+            <span style={{ fontSize: window.innerWidth < 640 ? '12px' : '13px', display: window.innerWidth < 640 ? 'none' : 'inline' }}>Type / to search repositories</span>
           </div>
           <Link to="/dashboard/new" style={{
             display: 'inline-flex', alignItems: 'center', gap: '8px',
-            padding: '10px 14px', background: 'var(--success)', color: '#fff',
-            borderRadius: 'var(--radius-md)', fontWeight: 600, fontSize: '13px',
+            padding: window.innerWidth < 640 ? '8px 10px' : '10px 14px', background: 'var(--success)', color: '#fff',
+            borderRadius: 'var(--radius-md)', fontWeight: 600, fontSize: window.innerWidth < 640 ? '12px' : '13px',
             textDecoration: 'none', transition: 'opacity var(--transition-fast)',
           }}
             onMouseEnter={e => e.currentTarget.style.opacity = '0.88'}
             onMouseLeave={e => e.currentTarget.style.opacity = '1'}
           >
-            <Plus size={16} /> New
+            <Plus size={16} /> {window.innerWidth < 640 ? '' : 'New'}
           </Link>
         </div>
       </div>
 
       <div style={{
-        display: 'grid', gridTemplateColumns: '280px minmax(0, 1fr)', gap: '24px', alignItems: 'start'
+        display: 'grid', 
+        gridTemplateColumns: window.innerWidth < 640 ? '1fr' : '280px minmax(0, 1fr)', 
+        gap: window.innerWidth < 640 ? '16px' : '24px', 
+        alignItems: 'start'
       }}>
-        <aside style={{ position: 'sticky', top: '88px' }}>
+        <aside style={{ position: window.innerWidth < 640 ? 'relative' : 'sticky', top: '88px' }}>
           {/* Profile Picture Card - Read Only */}
           <div style={{
             padding: '18px', marginBottom: '16px', background: 'var(--bg-default)',
