@@ -41,7 +41,11 @@ export default function Customization() {
           profileImage: base64Image
         });
 
-        setProfileImage(res.data.user.profileImage);
+        const updatedUser = res.data.user;
+        setProfileImage(updatedUser.profileImage);
+        
+        // Update localStorage with new user data
+        localStorage.setItem('user', JSON.stringify(updatedUser));
         await syncAuthState();
         alert('Profile picture updated successfully!');
       };

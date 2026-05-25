@@ -58,7 +58,11 @@ function Profile() {
             profileImage: base64Image
           });
 
-          setProfileData(prev => ({...prev, profileImage: res.data.user.profileImage}));
+          const updatedUser = res.data.user;
+          setProfileData(prev => ({...prev, profileImage: updatedUser.profileImage}));
+          
+          // Update localStorage with new user data
+          localStorage.setItem('user', JSON.stringify(updatedUser));
           await syncAuthState();
         } catch (err) {
           setUploadError(err.response?.data?.message || 'Failed to upload profile picture');
@@ -86,7 +90,11 @@ function Profile() {
         profileImage: defaultImage
       });
 
-      setProfileData(prev => ({...prev, profileImage: res.data.user.profileImage}));
+      const updatedUser = res.data.user;
+      setProfileData(prev => ({...prev, profileImage: updatedUser.profileImage}));
+      
+      // Update localStorage with new user data
+      localStorage.setItem('user', JSON.stringify(updatedUser));
       await syncAuthState();
     } catch (err) {
       setUploadError(err.response?.data?.message || 'Failed to remove profile picture');
