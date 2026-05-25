@@ -1,80 +1,20 @@
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState } from 'react';
 import axiosInstance from '../api/axiosConfig';
 import { useAuth } from '../store/authStore';
 import { Link } from 'react-router-dom';
-import { Book, Plus, History, Star, GitBranch, Search, Bell, Bookmark, ArrowRight, Camera } from 'lucide-react';
+import { Book, Plus, History, Star, GitBranch, Search, Bell, Bookmark, ArrowRight } from 'lucide-react';
 
 function Dashboard() {
   const [myRepos, setMyRepos] = useState([]);
   const [allRepos, setAllRepos] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [loading, setLoading] = useState(true);
-  const [profileImage, setProfileImage] = useState(null);
-  const [uploadingProfile, setUploadingProfile] = useState(false);
-  const [uploadError, setUploadError] = useState('');
-  const fileInputRef = useRef(null);
   const { currentUser, syncAuthState } = useAuth();
 
   useEffect(() => {
     // Sync auth state to ensure we have the latest user data
     syncAuthState();
   }, [syncAuthState]);
-
-  useEffect(() => {
-    // Update profile image from current user
-    if (currentUser?.profileImage) {
-      setProfileImage(currentUser.profileImage);
-    }
-  }, [currentUser?.profileImage]);
-
-  const handleProfilePictureChange = async (e) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    // Validate file type
-    if (!file.type.startsWith('image/')) {
-      setUploadError('Please select a valid image file');
-      return;
-    }
-
-    // Validate file size (max 2MB)
-    if (file.size > 2 * 1024 * 1024) {
-      setUploadError('Image size must be less than 2MB');
-      return;
-    }
-
-    setUploadingProfile(true);
-    setUploadError('');
-
-    try {
-      const reader = new FileReader();
-      reader.onload = async (event) => {
-        const base64Image = event.target?.result;
-        
-        try {
-          const res = await axiosInstance.post('/user-api/upload-profile-picture', {
-            profileImage: base64Image
-          });
-
-          const updatedUser = res.data.user;
-          setProfileImage(updatedUser.profileImage);
-          
-          // Update localStorage with new user data
-          localStorage.setItem('user', JSON.stringify(updatedUser));
-          await syncAuthState();
-        } catch (err) {
-          setUploadError(err.response?.data?.message || 'Failed to upload profile picture');
-        } finally {
-          setUploadingProfile(false);
-        }
-      };
-      reader.readAsDataURL(file);
-    } catch (err) {
-      setUploadError('Error processing image');
-      setUploadingProfile(false);
-    }
-    e.target.value = '';
-  };
 
   useEffect(() => {
     const fetchDashboardData = async () => {
@@ -173,78 +113,31 @@ function Dashboard() {
         display: 'grid', gridTemplateColumns: '280px minmax(0, 1fr)', gap: '24px', alignItems: 'start'
       }}>
         <aside style={{ position: 'sticky', top: '88px' }}>
-          {/* Profile Picture Card */}
+          {/* Profile Picture Card - Read Only */}
           <div style={{
             padding: '18px', marginBottom: '16px', background: 'var(--bg-default)',
             border: '1px solid var(--border-default)', borderRadius: 'var(--radius-lg)',
             textAlign: 'center'
           }}>
-            <div style={{ position: 'relative', marginBottom: '12px', display: 'inline-block', width: '100%' }}>
-              <img
-                src={profileImage || "https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_960_720.png"}
-                alt={currentUser?.name}
-                style={{
-                  width: '80px',
-                  height: '80px',
-                  borderRadius: '50%',
-                  border: '2px solid var(--border-default)',
-                  objectFit: 'cover',
-                  margin: '0 auto',
-                  display: 'block'
-                }}
-              />
-              <button
-                onClick={() => fileInputRef.current?.click()}
-                disabled={uploadingProfile}
-                style={{
-                  position: 'absolute',
-                  bottom: '-5px',
-                  right: '25%',
-                  width: '32px',
-                  height: '32px',
-                  borderRadius: '50%',
-                  background: 'var(--accent-primary)',
-                  border: '2px solid var(--bg-default)',
-                  color: '#fff',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  cursor: uploadingProfile ? 'not-allowed' : 'pointer',
-                  opacity: uploadingProfile ? 0.7 : 1,
-                  transition: 'all var(--transition-fast)',
-                  fontFamily: 'inherit',
-                }}
-                onMouseEnter={e => { if (!uploadingProfile) e.currentTarget.style.opacity = '0.85'; }}
-                onMouseLeave={e => { e.currentTarget.style.opacity = uploadingProfile ? '0.7' : '1'; }}
-                title="Change profile picture"
-              >
-                <Camera size={16} />
-              </button>
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept="image/*"
-                onChange={handleProfilePictureChange}
-                disabled={uploadingProfile}
-                style={{ display: 'none' }}
-              />
-            </div>
-            <h3 style={{ fontSize: '14px', fontWeight: 700, color: 'var(--fg-default)', margin: '12px 0 4px' }}>
+            <img
+              src={currentUser?.profileImage || "https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_960_720.png"}
+              alt={currentUser?.name}
+              style={{
+                width: '80px',
+                height: '80px',
+                borderRadius: '50%',
+                border: '2px solid var(--border-default)',
+                objectFit: 'cover',
+                margin: '0 auto 12px',
+                display: 'block'
+              }}
+            />
+            <h3 style={{ fontSize: '14px', fontWeight: 700, color: 'var(--fg-default)', margin: '0 0 4px' }}>
               {currentUser?.name}
             </h3>
             <p style={{ fontSize: '12px', color: 'var(--fg-subtle)', margin: 0 }}>
               @{currentUser?.name?.toLowerCase().replace(/\s+/g, '_')}
             </p>
-            {uploadError && (
-              <p style={{ fontSize: '11px', color: 'var(--danger)', margin: '8px 0 0', textAlign: 'center' }}>
-                ⚠ {uploadError}
-              </p>
-            )}
-            {uploadingProfile && (
-              <p style={{ fontSize: '11px', color: 'var(--accent-primary)', margin: '8px 0 0' }}>
-                ⏳ Uploading...
-              </p>
-            )}
           </div>
 
           <div style={{
