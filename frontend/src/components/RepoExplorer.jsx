@@ -212,19 +212,19 @@ function RepoExplorer() {
   );
 
   return (
-    <div className="animate-fade-in" style={{ maxWidth: '960px', margin: '0 auto', padding: '32px 24px' }}>
+    <div className="animate-fade-in" style={{ maxWidth: '960px', margin: '0 auto', padding: window.innerWidth < 640 ? '16px 12px' : '32px 24px' }}>
       {/* Repo Header */}
       <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '20px', flexWrap: 'wrap' }}>
-        <GitBranch size={20} style={{ color: 'var(--fg-subtle)' }} />
+        <GitBranch size={window.innerWidth < 640 ? 16 : 20} style={{ color: 'var(--fg-subtle)' }} />
         {repoInfo?.owner && (
           <>
             <Link to={`/profile/${repoInfo.owner.name}`} style={{
-              fontSize: '18px', color: 'var(--accent-primary)', fontWeight: 500, textDecoration: 'none',
+              fontSize: window.innerWidth < 640 ? '14px' : '18px', color: 'var(--accent-primary)', fontWeight: 500, textDecoration: 'none',
             }}>{repoInfo.owner.name}</Link>
-            <span style={{ color: 'var(--fg-subtle)', fontSize: '18px' }}>/</span>
+            <span style={{ color: 'var(--fg-subtle)', fontSize: window.innerWidth < 640 ? '14px' : '18px' }}>/</span>
           </>
         )}
-        <span style={{ fontSize: '18px', fontWeight: 700, color: 'var(--fg-default)' }}>{repoInfo?.title}</span>
+        <span style={{ fontSize: window.innerWidth < 640 ? '14px' : '18px', fontWeight: 700, color: 'var(--fg-default)' }}>{repoInfo?.title}</span>
         <span style={{
           marginLeft: '4px', padding: '2px 10px', fontSize: '11px', fontWeight: 500,
           border: '1px solid var(--border-default)', borderRadius: '12px',
@@ -851,9 +851,9 @@ function RepoExplorer() {
         {files.length > 0 ? (
           files.map((file, index) => (
             <div key={file._id || index} style={{
-              display: 'flex', alignItems: 'center', padding: '10px 16px',
+              display: 'flex', alignItems: 'center', padding: window.innerWidth < 640 ? '10px 8px' : '10px 16px',
               borderBottom: index < files.length - 1 ? '1px solid var(--border-muted)' : 'none',
-              transition: 'background var(--transition-fast)',
+              transition: 'background var(--transition-fast)', gap: '8px', flexWrap: window.innerWidth < 640 ? 'wrap' : 'nowrap',
             }}
               onMouseEnter={e => e.currentTarget.style.background = 'var(--bg-subtle)'}
               onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
@@ -862,20 +862,22 @@ function RepoExplorer() {
                 <FileText size={16} style={{ color: 'var(--fg-subtle)' }} />
               </div>
               <Link to={`/dashboard/repo/${repoId}/blob/${file.fileName || file.name}`} style={{
-                fontSize: '14px', color: 'var(--fg-default)',
-                textDecoration: 'none', flex: 1,
+                fontSize: window.innerWidth < 640 ? '12px' : '14px', color: 'var(--fg-default)',
+                textDecoration: 'none', flex: 1, minWidth: '0', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
               }}>
                 {file.fileName || file.name}
               </Link>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                {file.size && (
+              <div style={{ display: 'flex', alignItems: 'center', gap: window.innerWidth < 640 ? '4px' : '12px', flexWrap: window.innerWidth < 640 ? 'wrap' : 'nowrap' }}>
+                {file.size && window.innerWidth >= 768 && (
                   <span style={{ fontSize: '12px', color: 'var(--fg-subtle)' }}>
                     {file.size} B
                   </span>
                 )}
-                <span style={{ fontSize: '12px', color: 'var(--fg-subtle)' }}>
-                  {file.updatedAt ? new Date(file.updatedAt).toLocaleDateString() : ''}
-                </span>
+                {window.innerWidth >= 768 && (
+                  <span style={{ fontSize: '12px', color: 'var(--fg-subtle)' }}>
+                    {file.updatedAt ? new Date(file.updatedAt).toLocaleDateString() : ''}
+                  </span>
+                )}
                 {/* Edit button for owner and collaborators */}
                 {(isOwner || isCollaborator) && (
                   <button onClick={() => handleEditFile(file)}

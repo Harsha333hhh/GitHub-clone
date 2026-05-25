@@ -126,11 +126,11 @@ function Profile() {
   );
 
   return (
-    <div className="animate-fade-in" style={{ maxWidth: '960px', margin: '0 auto', padding: '32px 24px' }}>
-      <div style={{ display: 'flex', gap: '32px', flexWrap: 'wrap' }}>
+    <div className="animate-fade-in" style={{ maxWidth: '960px', margin: '0 auto', padding: window.innerWidth < 640 ? '16px 12px' : '32px 24px' }}>
+      <div style={{ display: 'flex', gap: window.innerWidth < 640 ? '16px' : '32px', flexWrap: 'wrap' }}>
 
         {/* Left Sidebar */}
-        <div style={{ width: '260px', flexShrink: 0 }}>
+        <div style={{ width: window.innerWidth < 640 ? '100%' : '260px', flexShrink: 0 }}>
           <div style={{ position: 'relative', marginBottom: '16px' }}>
             <img
               src={profileData.profileImage || "https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_960_720.png"}
