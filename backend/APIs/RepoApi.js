@@ -73,6 +73,10 @@ repositoryRoute.post('/repositories',async(req,res)=>{
         let createdrepository=await repository.save();
         console.log("Repository saved:", createdrepository._id);
         
+        // Add repository to user's repositories array
+        await UserModel.findByIdAndUpdate(ownerId, { $push: { repositories: createdrepository._id } });
+        console.log("Repository added to user's repositories array");
+        
         // populate owner info before sending response
         await createdrepository.populate('owner', 'name email profileImage');
         console.log("Repository populated with owner info");
@@ -161,6 +165,10 @@ repositoryRoute.delete('/repositories/:repositoryId',async(req,res)=>{
         }
         
         await RepositoryModel.findByIdAndDelete(repositoryId);
+        
+        // Remove repository from user's repositories array
+        await UserModel.findByIdAndUpdate(userId, { $pull: { repositories: repositoryId } });
+        
         res.status(200).json({message:"Repository deleted successfully",payload:repository})
     } catch (err) {
         res.status(500).json({message:"Error deleting repository",reason:err.message})
