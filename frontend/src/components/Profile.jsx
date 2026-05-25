@@ -1,12 +1,18 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import axiosInstance from '../api/axiosConfig';
 import { useParams, Link } from 'react-router-dom';
-import { Book, Users, Star, MapPin, Calendar } from 'lucide-react';
+import { Book, Users, Star, MapPin, Calendar, Camera } from 'lucide-react';
+import { useAuth } from '../store/authStore';
 
 function Profile() {
   const { username } = useParams();
+  const { currentUser, syncAuthState } = useAuth();
   const [profileData, setProfileData] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [uploadingProfile, setUploadingProfile] = useState(false);
+  const [uploadError, setUploadError] = useState('');
+  const fileInputRef = useRef(null);
+  const isOwnProfile = currentUser?.name === username;
 
   useEffect(() => {
     const fetchProfile = async () => {
@@ -22,6 +28,51 @@ function Profile() {
     };
     fetchProfile();
   }, [username]);
+
+  const handleProfilePictureChange = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      setUploadError('Please select a valid image file');
+      return;
+    }
+
+    // Validate file size (max 2MB)
+    if (file.size > 2 * 1024 * 1024) {
+      setUploadError('Image size must be less than 2MB');
+      return;
+    }
+
+    setUploadingProfile(true);
+    setUploadError('');
+
+    try {
+      const reader = new FileReader();
+      reader.onload = async (event) => {
+        const base64Image = event.target?.result;
+        
+        try {
+          const res = await axiosInstance.post('/user-api/upload-profile-picture', {
+            profileImage: base64Image
+          });
+
+          setProfileData(prev => ({...prev, profileImage: res.data.user.profileImage}));
+          await syncAuthState();
+        } catch (err) {
+          setUploadError(err.response?.data?.message || 'Failed to upload profile picture');
+        } finally {
+          setUploadingProfile(false);
+        }
+      };
+      reader.readAsDataURL(file);
+    } catch (err) {
+      setUploadError('Error processing image');
+      setUploadingProfile(false);
+    }
+    e.target.value = '';
+  };
 
   if (loading) return (
     <div style={{ maxWidth: '960px', margin: '0 auto', padding: '32px 24px', display: 'flex', gap: '32px' }}>
@@ -61,23 +112,91 @@ function Profile() {
                 boxShadow: 'var(--shadow-md)',
               }}
             />
+            {isOwnProfile && (
+              <>
+                <button
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={uploadingProfile}
+                  style={{
+                    position: 'absolute',
+                    bottom: '12px',
+                    right: '12px',
+                    width: '48px',
+                    height: '48px',
+                    borderRadius: '50%',
+                    background: 'var(--accent-primary)',
+                    border: '3px solid var(--bg-default)',
+                    color: '#fff',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    cursor: uploadingProfile ? 'not-allowed' : 'pointer',
+                    opacity: uploadingProfile ? 0.7 : 1,
+                    transition: 'all var(--transition-fast)',
+                    fontFamily: 'inherit',
+                    boxShadow: 'var(--shadow-md)',
+                  }}
+                  onMouseEnter={e => { if (!uploadingProfile) e.currentTarget.style.opacity = '0.85'; }}
+                  onMouseLeave={e => { e.currentTarget.style.opacity = uploadingProfile ? '0.7' : '1'; }}
+                  title="Change profile picture"
+                >
+                  <Camera size={24} />
+                </button>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  onChange={handleProfilePictureChange}
+                  disabled={uploadingProfile}
+                  style={{ display: 'none' }}
+                />
+              </>
+            )}
           </div>
+          {isOwnProfile && uploadError && (
+            <div style={{ 
+              padding: '10px 12px', 
+              background: 'var(--danger)', 
+              color: '#fff', 
+              borderRadius: 'var(--radius-md)',
+              fontSize: '12px',
+              marginBottom: '12px',
+              textAlign: 'center'
+            }}>
+              {uploadError}
+            </div>
+          )}
+          {isOwnProfile && uploadingProfile && (
+            <div style={{ 
+              padding: '10px 12px', 
+              background: 'var(--accent-primary)', 
+              color: '#fff', 
+              borderRadius: 'var(--radius-md)',
+              fontSize: '12px',
+              marginBottom: '12px',
+              textAlign: 'center'
+            }}>
+              ⏳ Uploading...
+            </div>
+          )}
           <h1 style={{ fontSize: '24px', fontWeight: 700, color: 'var(--fg-default)' }}>{profileData.name}</h1>
           <p style={{ fontSize: '18px', fontWeight: 300, color: 'var(--fg-muted)', marginBottom: '12px' }}>{username}</p>
           {profileData.bio && (
             <p style={{ fontSize: '14px', color: 'var(--fg-default)', marginBottom: '16px', lineHeight: 1.6 }}>{profileData.bio}</p>
           )}
 
-          <button style={{
-            width: '100%', padding: '8px', fontSize: '13px', fontWeight: 600,
-            background: 'var(--bg-subtle)', border: '1px solid var(--border-default)',
-            borderRadius: 'var(--radius-md)', color: 'var(--fg-default)',
-            cursor: 'pointer', transition: 'all var(--transition-fast)', fontFamily: 'inherit',
-            marginBottom: '16px',
-          }}
-            onMouseEnter={e => e.currentTarget.style.borderColor = 'var(--fg-subtle)'}
-            onMouseLeave={e => e.currentTarget.style.borderColor = 'var(--border-default)'}
-          >Follow</button>
+          {!isOwnProfile && (
+            <button style={{
+              width: '100%', padding: '8px', fontSize: '13px', fontWeight: 600,
+              background: 'var(--bg-subtle)', border: '1px solid var(--border-default)',
+              borderRadius: 'var(--radius-md)', color: 'var(--fg-default)',
+              cursor: 'pointer', transition: 'all var(--transition-fast)', fontFamily: 'inherit',
+              marginBottom: '16px',
+            }}
+              onMouseEnter={e => e.currentTarget.style.borderColor = 'var(--fg-subtle)'}
+              onMouseLeave={e => e.currentTarget.style.borderColor = 'var(--border-default)'}
+            >Follow</button>
+          )}
 
           <div style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '14px', color: 'var(--fg-muted)' }}>
             <Users size={16} />
