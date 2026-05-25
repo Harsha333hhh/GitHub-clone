@@ -24,14 +24,23 @@ issueRouter.post("/:repoId/issues", async (req,res)=>{
 // Get all issues of a repository
 issueRouter.get("/:repoId/issues", async (req,res)=>{
   try {
+    const { repoId } = req.params;
+    
+    // Validate repoId is a valid MongoDB ObjectId
+    if (!repoId || repoId === 'all' || repoId.length !== 24) {
+      return res.json([]); // Return empty array for invalid repoId
+    }
+    
     const issues = await IssueTypeModel.find({
-      repoId:req.params.repoId
+      repoId: repoId
     })
     .populate("author");
 
-    res.json(issues);
+    res.json(issues || []);
   } catch (err) {
-    res.status(500).json({ message: 'Error fetching issues', reason: err.message });
+    console.error('Issues API Error:', err);
+    // Return empty array instead of error to prevent UI crashes
+    res.json([]);
   }
 });
 

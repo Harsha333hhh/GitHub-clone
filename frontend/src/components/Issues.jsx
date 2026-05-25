@@ -35,7 +35,7 @@ function Issues() {
       setIssues(Array.isArray(fetchedIssues) ? fetchedIssues : []);
     } catch (err) {
       console.error('Error fetching issues:', err);
-      setIssues([]);
+      setIssues([]); // Set to empty array on error
     } finally {
       setLoading(false);
     }
