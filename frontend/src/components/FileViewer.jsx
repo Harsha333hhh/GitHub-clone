@@ -33,7 +33,7 @@ function FileViewer() {
   };
 
   if (loading) return (
-    <div style={{ maxWidth: '960px', margin: '0 auto', padding: '32px 24px' }}>
+    <div style={{ maxWidth: '960px', margin: '0 auto', padding: window.innerWidth < 640 ? '16px 12px' : '32px 24px' }}>
       <div className="skeleton" style={{ height: '20px', width: '50%', marginBottom: '16px' }}></div>
       <div style={{ border: '1px solid var(--border-default)', borderRadius: 'var(--radius-lg)', overflow: 'hidden' }}>
         <div className="skeleton" style={{ height: '40px', borderRadius: 0 }}></div>
@@ -47,7 +47,7 @@ function FileViewer() {
   const lines = content.split('\n');
 
   return (
-    <div className="animate-fade-in" style={{ maxWidth: '960px', margin: '0 auto', padding: '32px 24px' }}>
+    <div className="animate-fade-in" style={{ maxWidth: '960px', margin: '0 auto', padding: window.innerWidth < 640 ? '16px 12px' : '32px 24px' }}>
       {/* Breadcrumb */}
       <nav style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '14px', marginBottom: '16px' }}>
         <Link to={`/dashboard/repo/${repoId}`} style={{ color: 'var(--accent-primary)', fontWeight: 600, textDecoration: 'none' }}>
