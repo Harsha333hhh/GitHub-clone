@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useRef } from 'react';
 import axiosInstance from '../api/axiosConfig';
 import { useParams, Link } from 'react-router-dom';
-import { Book, Users, Star, MapPin, Calendar, Camera } from 'lucide-react';
+import { Book, Users, Star, MapPin, Calendar, Camera, Trash2 } from 'lucide-react';
 import { useAuth } from '../store/authStore';
 
 function Profile() {
@@ -74,6 +74,27 @@ function Profile() {
     e.target.value = '';
   };
 
+  const handleDeleteProfilePicture = async () => {
+    if (!window.confirm('Are you sure you want to remove your profile picture?')) return;
+
+    setUploadingProfile(true);
+    setUploadError('');
+
+    try {
+      const defaultImage = "https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_960_720.png";
+      const res = await axiosInstance.post('/user-api/upload-profile-picture', {
+        profileImage: defaultImage
+      });
+
+      setProfileData(prev => ({...prev, profileImage: res.data.user.profileImage}));
+      await syncAuthState();
+    } catch (err) {
+      setUploadError(err.response?.data?.message || 'Failed to remove profile picture');
+    } finally {
+      setUploadingProfile(false);
+    }
+  };
+
   if (loading) return (
     <div style={{ maxWidth: '960px', margin: '0 auto', padding: '32px 24px', display: 'flex', gap: '32px' }}>
       <div style={{ width: '260px', flexShrink: 0 }}>
@@ -135,6 +156,7 @@ function Profile() {
                     transition: 'all var(--transition-fast)',
                     fontFamily: 'inherit',
                     boxShadow: 'var(--shadow-md)',
+                    zIndex: 10,
                   }}
                   onMouseEnter={e => { if (!uploadingProfile) e.currentTarget.style.opacity = '0.85'; }}
                   onMouseLeave={e => { e.currentTarget.style.opacity = uploadingProfile ? '0.7' : '1'; }}
@@ -153,6 +175,64 @@ function Profile() {
               </>
             )}
           </div>
+
+          {isOwnProfile && (
+            <div style={{ display: 'flex', gap: '8px', marginBottom: '16px' }}>
+              <button
+                onClick={() => fileInputRef.current?.click()}
+                disabled={uploadingProfile}
+                style={{
+                  flex: 1,
+                  padding: '10px 12px',
+                  fontSize: '13px',
+                  fontWeight: 600,
+                  background: 'var(--accent-primary)',
+                  color: '#fff',
+                  border: 'none',
+                  borderRadius: 'var(--radius-md)',
+                  cursor: uploadingProfile ? 'not-allowed' : 'pointer',
+                  opacity: uploadingProfile ? 0.7 : 1,
+                  transition: 'all var(--transition-fast)',
+                  fontFamily: 'inherit',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '6px',
+                }}
+                onMouseEnter={e => { if (!uploadingProfile) e.currentTarget.style.opacity = '0.85'; }}
+                onMouseLeave={e => { e.currentTarget.style.opacity = uploadingProfile ? '0.7' : '1'; }}
+              >
+                <Camera size={16} /> Upload
+              </button>
+              <button
+                onClick={handleDeleteProfilePicture}
+                disabled={uploadingProfile}
+                style={{
+                  padding: '10px 12px',
+                  fontSize: '13px',
+                  fontWeight: 600,
+                  background: 'var(--bg-subtle)',
+                  color: 'var(--fg-default)',
+                  border: '1px solid var(--border-default)',
+                  borderRadius: 'var(--radius-md)',
+                  cursor: uploadingProfile ? 'not-allowed' : 'pointer',
+                  opacity: uploadingProfile ? 0.7 : 1,
+                  transition: 'all var(--transition-fast)',
+                  fontFamily: 'inherit',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '6px',
+                }}
+                onMouseEnter={e => { if (!uploadingProfile) e.currentTarget.style.borderColor = 'var(--danger)'; }}
+                onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--border-default)'; }}
+                title="Delete profile picture"
+              >
+                <Trash2 size={16} />
+              </button>
+            </div>
+          )}
+
           {isOwnProfile && uploadError && (
             <div style={{ 
               padding: '10px 12px', 
@@ -179,6 +259,7 @@ function Profile() {
               ⏳ Uploading...
             </div>
           )}
+
           <h1 style={{ fontSize: '24px', fontWeight: 700, color: 'var(--fg-default)' }}>{profileData.name}</h1>
           <p style={{ fontSize: '18px', fontWeight: 300, color: 'var(--fg-muted)', marginBottom: '12px' }}>{username}</p>
           {profileData.bio && (
