@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import { GitMerge, Check, MessageSquare, AlertCircle, Trash2, X, ArrowLeft } from 'lucide-react';
+import { GitMerge, Check, MessageSquare, AlertCircle, Trash2, X, ArrowLeft, Lock } from 'lucide-react';
 import axiosInstance from '../api/axiosConfig';
 import { useAuth } from '../store/authStore.js';
 
@@ -17,6 +17,7 @@ function PRDetail() {
   const [reviewText, setReviewText] = useState('');
   const [merging, setMerging] = useState(false);
   const [closing, setClosing] = useState(false);
+  const [mergeError, setMergeError] = useState(null);
 
   useEffect(() => {
     const fetchPR = async () => {
@@ -68,12 +69,19 @@ function PRDetail() {
   const handleMerge = async () => {
     if (!window.confirm('Are you sure you want to merge this PR?')) return;
     setMerging(true);
+    setMergeError(null);
     try {
       const res = await axiosInstance.post(`/pullrequest-api/${prId}/merge`);
       setPR(res.data.payload);
       alert('Pull request merged successfully!');
     } catch (err) {
-      alert(err.response?.data?.message || 'Failed to merge PR');
+      const errorData = err.response?.data;
+      setMergeError({
+        message: errorData?.message || 'Failed to merge PR',
+        reason: errorData?.reason || '',
+        conflicts: errorData?.conflicts || [],
+        requiresApproval: errorData?.requiresApproval || false
+      });
     } finally {
       setMerging(false);
     }
@@ -545,10 +553,82 @@ function PRDetail() {
             )}
 
             {canMerge && (
-              <div style={{ padding: '16px', borderTop: '1px solid var(--border-muted)' }}>
+              <div style={{ paddingTop: '16px', borderTop: '1px solid var(--border-muted)' }}>
+                {/* Merge Requirements */}
+                {pr.status === 'open' && (
+                  <div style={{ marginBottom: '16px' }}>
+                    {/* Approval Status */}
+                    <div style={{
+                      padding: '12px 16px',
+                      marginBottom: '12px',
+                      background: 'var(--bg-subtle)',
+                      border: '1px solid var(--border-default)',
+                      borderRadius: 'var(--radius-md)',
+                      fontSize: '13px'
+                    }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
+                        <Check size={16} style={{ color: pr.reviews?.some(r => r.decision === 'approved') ? 'var(--success)' : 'var(--fg-subtle)' }} />
+                        <span style={{ fontWeight: '600' }}>Approval</span>
+                        <span style={{ 
+                          marginLeft: 'auto',
+                          padding: '2px 8px',
+                          borderRadius: '4px',
+                          fontSize: '11px',
+                          background: pr.reviews?.some(r => r.decision === 'approved') ? 'var(--success-subtle)' : 'var(--warning-subtle)',
+                          color: pr.reviews?.some(r => r.decision === 'approved') ? 'var(--success)' : 'var(--warning)'
+                        }}>
+                          {pr.reviews?.some(r => r.decision === 'approved') ? '✓ Approved' : '⚠ Pending'}
+                        </span>
+                      </div>
+                      <p style={{ fontSize: '12px', color: 'var(--fg-muted)', margin: '0' }}>
+                        {pr.reviews?.some(r => r.decision === 'approved') 
+                          ? 'This PR has been approved and is ready to merge'
+                          : 'This PR requires approval from the repository owner before it can be merged'}
+                      </p>
+                    </div>
+                  </div>
+                )}
+
+                {/* Merge Error Message */}
+                {mergeError && (
+                  <div style={{
+                    padding: '12px 16px',
+                    marginBottom: '16px',
+                    background: 'var(--danger-subtle)',
+                    border: '1px solid rgba(248,81,73,0.3)',
+                    borderRadius: 'var(--radius-md)',
+                    color: 'var(--danger)',
+                    fontSize: '13px'
+                  }}>
+                    <div style={{ display: 'flex', gap: '8px', marginBottom: '8px', alignItems: 'flex-start' }}>
+                      {mergeError.requiresApproval ? <Lock size={16} /> : <AlertCircle size={16} />}
+                      <div>
+                        <div style={{ fontWeight: '600', marginBottom: '4px' }}>{mergeError.message}</div>
+                        {mergeError.reason && (
+                          <div style={{ fontSize: '12px', color: 'var(--danger)', opacity: 0.9 }}>
+                            {mergeError.reason}
+                          </div>
+                        )}
+                        {mergeError.conflicts && mergeError.conflicts.length > 0 && (
+                          <div style={{ marginTop: '8px', fontSize: '12px' }}>
+                            <div style={{ fontWeight: '600', marginBottom: '4px' }}>Conflicts detected:</div>
+                            <ul style={{ margin: '0', paddingLeft: '20px' }}>
+                              {mergeError.conflicts.map((conflict, i) => (
+                                <li key={i}>{conflict.fileName}: {conflict.message}</li>
+                              ))}
+                            </ul>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Merge Button */}
                 <button
                   onClick={handleMerge}
-                  disabled={merging}
+                  disabled={merging || !pr.reviews?.some(r => r.decision === 'approved')}
+                  title={!pr.reviews?.some(r => r.decision === 'approved') ? 'This PR needs approval before merging' : ''}
                   style={{
                     width: '100%',
                     display: 'flex',
@@ -558,20 +638,20 @@ function PRDetail() {
                     padding: '10px 12px',
                     fontSize: '13px',
                     fontWeight: '600',
-                    background: 'var(--success)',
+                    background: !pr.reviews?.some(r => r.decision === 'approved') ? 'var(--fg-subtle)' : 'var(--success)',
                     color: '#fff',
                     border: 'none',
                     borderRadius: 'var(--radius-md)',
-                    cursor: merging ? 'not-allowed' : 'pointer',
-                    opacity: merging ? 0.7 : 1,
+                    cursor: merging || !pr.reviews?.some(r => r.decision === 'approved') ? 'not-allowed' : 'pointer',
+                    opacity: merging || !pr.reviews?.some(r => r.decision === 'approved') ? 0.7 : 1,
                     transition: 'opacity var(--transition-fast)',
                     fontFamily: 'inherit'
                   }}
                   onMouseEnter={(e) => {
-                    if (!merging) e.currentTarget.style.opacity = '0.85';
+                    if (!merging && pr.reviews?.some(r => r.decision === 'approved')) e.currentTarget.style.opacity = '0.85';
                   }}
                   onMouseLeave={(e) => {
-                    e.currentTarget.style.opacity = merging ? '0.7' : '1';
+                    e.currentTarget.style.opacity = merging || !pr.reviews?.some(r => r.decision === 'approved') ? '0.7' : '1';
                   }}
                 >
                   <GitMerge size={14} />

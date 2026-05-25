@@ -264,6 +264,48 @@ pullRequestRouter.post('/:prId/merge', authMiddleware, async (req, res) => {
       return res.status(403).json({ message: 'Only the repository owner can merge PRs' });
     }
 
+    // ===== NEW: Check if PR has been approved =====
+    const hasApproval = pr.reviews && pr.reviews.some(r => r.decision === 'approved');
+    if (!hasApproval) {
+      return res.status(400).json({ 
+        message: 'Pull request cannot be merged',
+        reason: 'This PR requires owner approval before merging. Please review and approve the changes first.',
+        requiresApproval: true 
+      });
+    }
+
+    // ===== NEW: Check for conflicts =====
+    const conflicts = [];
+    if (pr.changes && pr.changes.length > 0) {
+      for (const change of pr.changes) {
+        const currentFile = await fileModel.findOne({ 
+          repoId: pr.repository, 
+          fileName: change.fileName 
+        });
+
+        if (change.status === 'deleted' && currentFile) {
+          // File marked for deletion but exists - could be conflict
+          if (currentFile.content !== change.oldContent) {
+            conflicts.push({
+              fileName: change.fileName,
+              type: 'modification-conflict',
+              message: `File was modified after this PR was created`
+            });
+          }
+        }
+      }
+    }
+
+    // If conflicts found, return error
+    if (conflicts.length > 0) {
+      return res.status(409).json({ 
+        message: 'Merge conflict detected',
+        reason: 'This PR has conflicts that need to be resolved manually',
+        conflicts,
+        conflictCount: conflicts.length
+      });
+    }
+
     // Apply changes to files
     if (pr.changes && pr.changes.length > 0) {
       for (const change of pr.changes) {
