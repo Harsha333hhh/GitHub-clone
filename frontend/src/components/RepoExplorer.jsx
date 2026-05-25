@@ -509,19 +509,6 @@ function RepoExplorer() {
             </p>
           )}
 
-          {/* Owner Permission Info */}
-          {isOwner && (
-            <div className="animate-fade-in" style={{
-              padding: '12px 16px', marginBottom: '20px', fontSize: '13px',
-              borderRadius: 'var(--radius-md)',
-              background: 'var(--info-subtle)',
-              color: 'var(--info)',
-              border: '1px solid rgba(88,166,255,0.3)',
-            }}>
-              📌 <strong>Owner privileges:</strong> You can delete files and edit file content. Only you can delete—collaborators can only create and edit.
-            </div>
-          )}
-
           {/* ── New File Editor ── */}
           {showEditor && (isCollaborator || isOwner) && (
         <div className="animate-slide-down" style={{
