@@ -64,7 +64,7 @@ Save this markdown content into your `/frontend/README.md` file:
 
 A modular React client interface compiled natively utilizing Vite's lightning-fast Hot Module Replacement (HMR) environment. Styled with high-performance CSS implementations and managed seamlessly with atomic global state frameworks.
 
-## 🛠 Tech-Stack Specifications
+##  Tech-Stack Specifications
 
 - **Build Engine:** [Vite](https://vite.dev/) (React Configured SPA Variant)
 - **UI Base & Scripting Layer:** React.js (Hooks, Contexts, and Declarative Router Pipelines)
@@ -88,7 +88,7 @@ frontend/src/
 │   └── themeStore.js# Interface appearance metrics (Light/Dark transitions)
 ├── App.jsx          # Unified base route assignment engine
 └── main.jsx         # Context bootstrap initiation endpoint
-⚙️ Development Environment Orchestration
+ Development Environment Orchestration
 1. Variables Binding setup
 Instantiate a configuration document under frontend/.env modeled on the provided example file:
 
@@ -120,7 +120,7 @@ Save this markdown content into your `/backend/README.md` file:
 
 A decoupled architectural REST API constructed via Node.js and Express.js, built using clean Model-View-Controller (MVC) layers. Handles heavy serialization operations, database transactions, and route processing for your GitHub Clone system.
 
-## 🛠 Backend Architectural Specs
+##  Backend Architectural Specs
 
 - **Runtime Framework:** Node.js environment utilizing Express.js routing handlers.
 - **Database Persistence Layer:** MongoDB managed via object-relational mapping structures via Mongoose.
