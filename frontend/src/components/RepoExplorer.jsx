@@ -234,8 +234,8 @@ function RepoExplorer() {
           <Download size={14} /> Download
         </button>
 
-        {/* Upload file/folder buttons */}
-        {canWrite && (
+        {/* Upload file/folder buttons — only for collaborators (not owner) */}
+        {isCollaborator && (
           <>
             {/* File input for files */}
             <input
@@ -356,8 +356,8 @@ function RepoExplorer() {
           </button>
         )}
 
-        {/* Add File Button — only for owner/collaborator */}
-        {canWrite && (
+        {/* Add File Button — only for collaborators (not owner) */}
+        {isCollaborator && (
           <button onClick={() => { setShowEditor(true); setSaveError(''); }} style={{
             display: 'flex', alignItems: 'center', gap: '6px',
             padding: '5px 14px', fontSize: '12px', fontWeight: 600,
@@ -509,8 +509,21 @@ function RepoExplorer() {
             </p>
           )}
 
+          {/* Owner Permission Info */}
+          {isOwner && (
+            <div className="animate-fade-in" style={{
+              padding: '12px 16px', marginBottom: '20px', fontSize: '13px',
+              borderRadius: 'var(--radius-md)',
+              background: 'var(--info-subtle)',
+              color: 'var(--info)',
+              border: '1px solid rgba(88,166,255,0.3)',
+            }}>
+              📌 <strong>Owner privileges:</strong> You can only delete files. Invite collaborators to create and edit files in your repository.
+            </div>
+          )}
+
           {/* ── New File Editor ── */}
-          {showEditor && canWrite && (
+          {showEditor && isCollaborator && (
         <div className="animate-slide-down" style={{
           border: '1px solid var(--accent-primary)', borderRadius: 'var(--radius-lg)',
           overflow: 'hidden', background: 'var(--bg-default)', marginBottom: '20px',
@@ -674,7 +687,7 @@ function RepoExplorer() {
             <Clock size={14} />
             <span>{files.length} {files.length === 1 ? 'file' : 'files'}</span>
           </div>
-          {canWrite && !showEditor && (
+          {isCollaborator && !showEditor && (
             <button onClick={() => { setShowEditor(true); setSaveError(''); }} style={{
               display: 'flex', alignItems: 'center', gap: '4px',
               padding: '3px 8px', fontSize: '11px', fontWeight: 600,
@@ -719,8 +732,8 @@ function RepoExplorer() {
                 <span style={{ fontSize: '12px', color: 'var(--fg-subtle)' }}>
                   {file.updatedAt ? new Date(file.updatedAt).toLocaleDateString() : ''}
                 </span>
-                {/* Only show delete button for owner/collaborator */}
-                {canWrite && (
+                {/* Only show delete button for owner */}
+                {isOwner && (
                   <button onClick={() => handleDeleteFile(file._id)}
                     title="Delete file"
                     style={{
@@ -745,9 +758,9 @@ function RepoExplorer() {
               This repository is empty
             </p>
             <p style={{ fontSize: '13px', color: 'var(--fg-subtle)', marginBottom: '16px' }}>
-              {canWrite ? 'Get started by creating a new file.' : 'No files have been added yet.'}
+              {isCollaborator ? 'Get started by creating a new file.' : isOwner ? 'No files yet. Only collaborators can add files.' : 'No files have been added yet.'}
             </p>
-            {canWrite && !showEditor && (
+            {isCollaborator && !showEditor && (
               <button onClick={() => { setShowEditor(true); setSaveError(''); }} style={{
                 display: 'inline-flex', alignItems: 'center', gap: '6px',
                 padding: '8px 20px', fontSize: '13px', fontWeight: 600,

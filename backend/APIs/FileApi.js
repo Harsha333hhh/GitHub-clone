@@ -15,7 +15,7 @@ async function checkWriteAccess(userId, repoId) {
   return { allowed: isOwner || isCollaborator, repo, isOwner };
 }
 
-// Upload file (auth required, owner or collaborator only)
+// Upload file (auth required, collaborator only - NOT owner)
 filerouter.post("/:repoId/files", authMiddleware, async (req, res) => {
   try {
     const userId = req.user.userId;
@@ -23,6 +23,10 @@ filerouter.post("/:repoId/files", authMiddleware, async (req, res) => {
 
     if (!allowed) {
       return res.status(403).json({ message: "You do not have write access to this repository" });
+    }
+
+    if (isOwner) {
+      return res.status(403).json({ message: "Owner cannot create files. Only collaborators can add files to the repository." });
     }
 
     const file = new fileModel({
@@ -82,7 +86,7 @@ filerouter.get("/:repoId", async (req, res) => {
   }
 });
 
-// Update file (auth required, owner or collaborator only)
+// Update file (auth required, collaborator only - NOT owner)
 filerouter.put("/files/:fileId", authMiddleware, async (req, res) => {
   try {
     const userId = req.user.userId;
@@ -94,6 +98,10 @@ filerouter.put("/files/:fileId", authMiddleware, async (req, res) => {
     const { allowed, repo, isOwner } = await checkWriteAccess(userId, existingFile.repoId);
     if (!allowed) {
       return res.status(403).json({ message: "You do not have write access to this repository" });
+    }
+
+    if (isOwner) {
+      return res.status(403).json({ message: "Owner cannot edit files. Only collaborators can update files in the repository." });
     }
 
     const file = await fileModel.findByIdAndUpdate(
@@ -120,7 +128,7 @@ filerouter.put("/files/:fileId", authMiddleware, async (req, res) => {
   }
 });
 
-// Delete file (auth required, owner or collaborator only)
+// Delete file (auth required, owner only - NOT collaborators)
 filerouter.delete("/files/:fileId", authMiddleware, async (req, res) => {
   try {
     const userId = req.user.userId;
@@ -132,6 +140,10 @@ filerouter.delete("/files/:fileId", authMiddleware, async (req, res) => {
     const { allowed, repo, isOwner } = await checkWriteAccess(userId, existingFile.repoId);
     if (!allowed) {
       return res.status(403).json({ message: "You do not have write access to this repository" });
+    }
+
+    if (!isOwner) {
+      return res.status(403).json({ message: "Only repository owner can delete files." });
     }
 
     await fileModel.findByIdAndDelete(req.params.fileId);
