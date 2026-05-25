@@ -57,8 +57,3 @@ function ProtectedRoute({ children }) {
 }
 
 export default ProtectedRoute;
-
-  return children;
-}
-
-export default ProtectedRoute;

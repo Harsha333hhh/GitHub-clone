@@ -122,7 +122,7 @@ function Profile() {
                 }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                     <div>
-                      <Link to={`/repo/${repo._id}`} style={{
+                      <Link to={`/dashboard/repo/${repo._id}`} style={{
                         fontSize: '18px', fontWeight: 600, color: 'var(--accent-primary)', textDecoration: 'none',
                       }}>
                         {repo.title}

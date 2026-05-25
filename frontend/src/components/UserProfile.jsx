@@ -86,7 +86,7 @@ function UserProfile() {
           <div style={{ display: 'flex', flexDirection: 'column' }}>
             {profile.repositories?.map((repo) => (
               <div key={repo._id} style={{ padding: '16px 0', borderBottom: '1px solid var(--border-muted)' }}>
-                <Link to={`/repo/${repo._id}`} style={{
+                <Link to={`/dashboard/repo/${repo._id}`} style={{
                   fontSize: '18px', fontWeight: 600, color: 'var(--accent-primary)', textDecoration: 'none',
                 }}>{repo.title}</Link>
                 {repo.description && (
