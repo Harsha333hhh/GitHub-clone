@@ -234,8 +234,8 @@ function RepoExplorer() {
           <Download size={14} /> Download
         </button>
 
-        {/* Upload file/folder buttons — only for collaborators (not owner) */}
-        {isCollaborator && (
+        {/* Upload file/folder buttons — for owner and collaborators */}
+        {(isOwner || isCollaborator) && (
           <>
             {/* File input for files */}
             <input
@@ -356,8 +356,8 @@ function RepoExplorer() {
           </button>
         )}
 
-        {/* Add File Button — only for collaborators (not owner) */}
-        {isCollaborator && (
+        {/* Add File Button — for owner and collaborators */}
+        {(isOwner || isCollaborator) && (
           <button onClick={() => { setShowEditor(true); setSaveError(''); }} style={{
             display: 'flex', alignItems: 'center', gap: '6px',
             padding: '5px 14px', fontSize: '12px', fontWeight: 600,
@@ -518,12 +518,12 @@ function RepoExplorer() {
               color: 'var(--info)',
               border: '1px solid rgba(88,166,255,0.3)',
             }}>
-              📌 <strong>Owner privileges:</strong> You can only delete files. Invite collaborators to create and edit files in your repository.
+              📌 <strong>Owner privileges:</strong> You can delete files and edit file content. Only you can delete—collaborators can only create and edit.
             </div>
           )}
 
           {/* ── New File Editor ── */}
-          {showEditor && isCollaborator && (
+          {showEditor && (isCollaborator || isOwner) && (
         <div className="animate-slide-down" style={{
           border: '1px solid var(--accent-primary)', borderRadius: 'var(--radius-lg)',
           overflow: 'hidden', background: 'var(--bg-default)', marginBottom: '20px',
@@ -687,7 +687,7 @@ function RepoExplorer() {
             <Clock size={14} />
             <span>{files.length} {files.length === 1 ? 'file' : 'files'}</span>
           </div>
-          {isCollaborator && !showEditor && (
+          {(isOwner || isCollaborator) && !showEditor && (
             <button onClick={() => { setShowEditor(true); setSaveError(''); }} style={{
               display: 'flex', alignItems: 'center', gap: '4px',
               padding: '3px 8px', fontSize: '11px', fontWeight: 600,
@@ -758,9 +758,9 @@ function RepoExplorer() {
               This repository is empty
             </p>
             <p style={{ fontSize: '13px', color: 'var(--fg-subtle)', marginBottom: '16px' }}>
-              {isCollaborator ? 'Get started by creating a new file.' : isOwner ? 'No files yet. Only collaborators can add files.' : 'No files have been added yet.'}
+              {isOwner || isCollaborator ? 'Get started by creating a new file.' : 'No files have been added yet.'}
             </p>
-            {isCollaborator && !showEditor && (
+            {(isOwner || isCollaborator) && !showEditor && (
               <button onClick={() => { setShowEditor(true); setSaveError(''); }} style={{
                 display: 'inline-flex', alignItems: 'center', gap: '6px',
                 padding: '8px 20px', fontSize: '13px', fontWeight: 600,

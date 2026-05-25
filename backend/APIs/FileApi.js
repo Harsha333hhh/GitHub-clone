@@ -15,7 +15,7 @@ async function checkWriteAccess(userId, repoId) {
   return { allowed: isOwner || isCollaborator, repo, isOwner };
 }
 
-// Upload file (auth required, collaborator only - NOT owner)
+// Upload file (auth required, owner or collaborator only)
 filerouter.post("/:repoId/files", authMiddleware, async (req, res) => {
   try {
     const userId = req.user.userId;
@@ -23,10 +23,6 @@ filerouter.post("/:repoId/files", authMiddleware, async (req, res) => {
 
     if (!allowed) {
       return res.status(403).json({ message: "You do not have write access to this repository" });
-    }
-
-    if (isOwner) {
-      return res.status(403).json({ message: "Owner cannot create files. Only collaborators can add files to the repository." });
     }
 
     const file = new fileModel({
@@ -86,7 +82,7 @@ filerouter.get("/:repoId", async (req, res) => {
   }
 });
 
-// Update file (auth required, collaborator only - NOT owner)
+// Update file (auth required, owner or collaborator only)
 filerouter.put("/files/:fileId", authMiddleware, async (req, res) => {
   try {
     const userId = req.user.userId;
@@ -98,10 +94,6 @@ filerouter.put("/files/:fileId", authMiddleware, async (req, res) => {
     const { allowed, repo, isOwner } = await checkWriteAccess(userId, existingFile.repoId);
     if (!allowed) {
       return res.status(403).json({ message: "You do not have write access to this repository" });
-    }
-
-    if (isOwner) {
-      return res.status(403).json({ message: "Owner cannot edit files. Only collaborators can update files in the repository." });
     }
 
     const file = await fileModel.findByIdAndUpdate(
