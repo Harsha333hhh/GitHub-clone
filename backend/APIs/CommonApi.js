@@ -11,8 +11,10 @@ const cookieOptions = {
     secure: isProd,
 };
 
-// password change 
-
+// CHANGE PASSWORD ENDPOINT - Allows users to update their password securely
+// bcrypt.compareSync(plain, hashed): synchronously compares old password with stored hashed password
+// Verifies old password first to prevent unauthorized password changes
+// Hashes new password with bcrypt before saving to ensure security
 commonRouter.put("/change-password/:userId",async(req,res)=>{
     // get userId
     let userId=req.params.userId;
@@ -21,15 +23,11 @@ commonRouter.put("/change-password/:userId",async(req,res)=>{
     if(!user){
         return res.status(404).json({message:"User not found"})
     }
-    // print user details for testing 
-    //res.status(200).json({message:"User details",payload:user})
-    // get old password from database 
     // get old password from body
     let oldPassword=req.body.oldPassword;
     // get new passsword 
     let newPassword=req.body.newPassword;
-    // authenticate user with old password 
-    //check if old password is correct or not
+    // verify old password is correct before allowing new password change
     if(bcrypt.compareSync(oldPassword,user.password)===true){
     const hashedPassword = await bcrypt.hash(newPassword, 10);
     user.password = hashedPassword;

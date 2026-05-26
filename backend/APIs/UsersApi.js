@@ -9,6 +9,9 @@ import bcrypt from 'bcrypt';
 
 export const userRoute = express.Router()
 
+// POST /api/users - User Registration endpoint
+// Creates a new user account with hashed password (bcrypt: secure password hashing algorithm)
+// Returns 201 status on success with user data (password excluded for security)
 userRoute.post('/users', async (req, res, next) => {
   try {
     console.log('Signup request received:', req.body);
@@ -20,7 +23,10 @@ userRoute.post('/users', async (req, res, next) => {
   }
 })
 
-//authenticate user 
+// POST /api/login - User Login endpoint
+// Verifies email/password using bcrypt.compare() (compares plain text password with hashed stored password)
+// Generates JWT token (signed token containing userId, expires in 24 hours) stored in HTTP-only cookie
+// httpOnly=true prevents JavaScript from accessing token (XSS protection), sameSite=lax prevents CSRF attacks
 userRoute.post('/login', async (req, res, next) => {
 
   let userCred = req.body
@@ -40,13 +46,18 @@ userRoute.post('/login', async (req, res, next) => {
     user
   })
 })
-// logout user
+// POST /api/logout - User Logout endpoint
+// Requires valid JWT token (authMiddleware validates token before allowing request)
+// Clears the authentication cookie to end user session
 userRoute.post('/logout', authMiddleware, (req, res) => {
   res.clearCookie('token', { httpOnly: true, sameSite: 'lax', secure: false })// must match original cookie options
   res.status(200).json({ message: 'Logout successful' })
 })
 
-//update user details
+// PUT /api/users - Update User Profile endpoint
+// Requires valid JWT token (authMiddleware: verifies token and extracts userId from decoded JWT)
+// bcrypt.genSalt(10): generates random salt (2^10 iterations) for secure password hashing
+// Updates user profile fields and hashes new password if provided
 userRoute.put('/users', authMiddleware, async (req, res, next) => {
   try {
     let userId = req.user.userId;
@@ -63,7 +74,10 @@ userRoute.put('/users', authMiddleware, async (req, res, next) => {
   }
 })
 
-// get user by username
+// GET /api/users/:username - Retrieve User Profile endpoint
+// Public endpoint (no authentication required) - retrieves user profile by username
+// Uses .select('-password') to exclude password from response (security)
+// Uses .populate('repositories') to fetch associated repository documents from database
 userRoute.get('/users/:username', async (req, res, next) => {
   try {
     const username = req.params.username;
@@ -88,7 +102,10 @@ userRoute.get('/users/:username', async (req, res, next) => {
   }
 });
 
-// Update profile picture (accepts base64 image)
+// POST /api/upload-profile-picture - Upload Profile Avatar endpoint
+// Requires valid JWT token (authMiddleware verifies user identity)
+// Accepts base64 encoded image data (encoded image sent as string in request body)
+// Validates image format and size (max 2MB) before storing to prevent malicious uploads
 userRoute.post('/upload-profile-picture', authMiddleware, async (req, res, next) => {
   try {
     const userId = req.user.userId;
@@ -127,7 +144,10 @@ userRoute.post('/upload-profile-picture', authMiddleware, async (req, res, next)
   }
 });
 
-// delete user
+// DELETE /api/delete - Permanently Delete User Account endpoint
+// Requires valid JWT token (authMiddleware verifies user has valid authentication)
+// Removes user document from MongoDB database and clears authentication cookie
+// User data cannot be recovered after deletion (permanent removal)
 userRoute.delete('/delete', authMiddleware, async (req, res, next) => {
   try {
     let userId = req.user.userId;

@@ -1,6 +1,9 @@
 import {Schema,model} from 'mongoose'
 
-//user schema
+// USER DATABASE SCHEMA - Defines structure for storing user data in MongoDB
+// Unique constraint on email prevents duplicate accounts in database
+// Password field stores bcrypt-hashed value (never plain text for security)
+// repositories: array of ObjectId references linking to Repository model (one user can have many repos)
 const userSchema = new Schema({
   name:{
     type:String,
@@ -9,11 +12,11 @@ const userSchema = new Schema({
   email:{
     type:String,
     required:[true,"Email is required"],
-    unique:[true,"Email already exists"]
+    unique:[true,"Email already exists"]  // unique constraint prevents duplicate email accounts
   },
   password: {
     type: String,
-    required:[true,"Password is required"]
+    required:[true,"Password is required"]  // stores bcrypt hashed password, never plain text
   },
   profileImage:{
     type:String,
@@ -27,17 +30,17 @@ const userSchema = new Schema({
   //followeres array of user ids 
   followers:[{
     type:Number,
-    default:0
+    default:0  // tracks follower count
   }],
   //array of user ids 
   following:[{
     type:Number,
-    default:0
+    default:0  // tracks following count
   }],
-  //array of repository ids
+  //array of repository ids - ObjectId references to Repository collection
   repositories:[{
     type:Schema.Types.ObjectId,
-    ref:"repository" //name of repository model
+    ref:"repository" //name of repository model - enables populate() for fetching full repo data
   }],
   createdAt:{
     type:Date,
@@ -45,8 +48,8 @@ const userSchema = new Schema({
   },
 },{
   strict:"throw",
-  timestamps:true,
-  versionKey:false
+  timestamps:true,  // automatically adds createdAt and updatedAt fields
+  versionKey:false  // removes __v field from documents
 })
 
 

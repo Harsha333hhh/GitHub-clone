@@ -6,7 +6,10 @@ import { UserModel as User } from '../Models/UserModel.js';
 dotenv.config();
 
 
-// -------- REGISTER --------
+// REGISTER FUNCTION - Creates new user account with secure password storage
+// bcrypt.genSalt(10): generates random salt (2^10=1024 iterations) added before hashing
+// bcrypt.hash(): one-way encryption making password unreadable (cannot be reversed even if database leaked)
+// Removes password before returning to ensure sensitive data never sent to frontend
 export const register = async (userObject) => {
 
     const user = new User(userObject);
@@ -25,7 +28,10 @@ export const register = async (userObject) => {
 
 
 
-// authenticate user and generate token
+// AUTHENTICATE FUNCTION - Verifies user credentials and generates JWT token
+// bcrypt.compare(plain, hashed): securely compares entered password with stored hashed password without exposing hash
+// jwt.sign(): creates signed token containing userId+email, only server can verify using JWT_SECRET
+// Token expires in 1 day (24 hours) for security, user must re-login after expiration
 export const authenticate = async ({ email, password }) => {
 
     if (!password) {

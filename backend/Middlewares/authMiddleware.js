@@ -3,6 +3,10 @@ import dotenv from "dotenv"
 
 dotenv.config()
 
+// AUTHENTICATION MIDDLEWARE - Protects routes by verifying JWT tokens
+// jwt.verify(): validates token signature using JWT_SECRET (ensures token hasn't been tampered with)
+// Checks cookies first, then Authorization header (Bearer token) for flexibility
+// Attaches decoded user info (userId, email) to req.user for use in route handlers
 export const authMiddleware = (req, res, next) => {
   try {
     let token = req.cookies?.token
