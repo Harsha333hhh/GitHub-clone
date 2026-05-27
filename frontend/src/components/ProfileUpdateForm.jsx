@@ -22,9 +22,10 @@ const ProfileUpdateForm = ({ user, onUpdate }) => {
     newUsername: ''
   });
 
-  // Bio update state
-  const [bioData, setBioData] = useState({
-    bio: user?.bio || ''
+  // Password update state
+  const [passwordData, setPasswordData] = useState({
+    currentPassword: '',
+    newPassword: ''
   });
 
   const handleUpdateEmail = async (e) => {
@@ -112,6 +113,42 @@ const ProfileUpdateForm = ({ user, onUpdate }) => {
     }
   };
 
+  const handleUpdatePassword = async (e) => {
+    e.preventDefault();
+    if (!passwordData.currentPassword || !passwordData.newPassword) {
+      setMessage({ type: 'error', text: 'Please fill in all password fields' });
+      return;
+    }
+
+    if (passwordData.newPassword.length < 8) {
+      setMessage({ type: 'error', text: 'New password must be at least 8 characters' });
+      return;
+    }
+
+    setIsLoading(true);
+    setMessage({ type: '', text: '' });
+
+    try {
+      await axios.put(
+        `${import.meta.env.VITE_API_URL}/user-api/update-password`,
+        {
+          currentPassword: passwordData.currentPassword,
+          newPassword: passwordData.newPassword
+        }
+      );
+
+      setMessage({ type: 'success', text: 'Password updated successfully' });
+      setPasswordData({ currentPassword: '', newPassword: '' });
+    } catch (err) {
+      setMessage({
+        type: 'error',
+        text: err.response?.data?.message || 'Failed to update password'
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const inputStyle = {
     width: '100%',
     padding: '8px 12px',
@@ -159,7 +196,8 @@ const ProfileUpdateForm = ({ user, onUpdate }) => {
         display: 'flex',
         gap: '24px',
         marginBottom: '24px',
-        borderBottom: '1px solid var(--border-default)'
+        borderBottom: '1px solid var(--border-default)',
+        overflowX: 'auto'
       }}>
         <button
           onClick={() => setActiveTab('email')}
@@ -172,6 +210,12 @@ const ProfileUpdateForm = ({ user, onUpdate }) => {
           style={tabStyle(activeTab === 'username')}
         >
           Username
+        </button>
+        <button
+          onClick={() => setActiveTab('password')}
+          style={tabStyle(activeTab === 'password')}
+        >
+          Password
         </button>
         <button
           onClick={() => setActiveTab('bio')}
@@ -368,6 +412,76 @@ const ProfileUpdateForm = ({ user, onUpdate }) => {
             }}
           >
             {isLoading ? 'Updating...' : 'Update Bio'}
+          </button>
+        </form>
+      )}
+
+      {/* Password Tab */}
+      {activeTab === 'password' && (
+        <form onSubmit={handleUpdatePassword} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+          <div>
+            <label style={{
+              display: 'block',
+              fontSize: '13px',
+              fontWeight: 600,
+              marginBottom: '6px',
+              color: 'var(--fg-default)'
+            }}>
+              Current Password
+            </label>
+            <input
+              type="password"
+              placeholder="Enter your current password"
+              value={passwordData.currentPassword}
+              onChange={(e) => setPasswordData({ ...passwordData, currentPassword: e.target.value })}
+              style={inputStyle}
+            />
+          </div>
+
+          <div>
+            <label style={{
+              display: 'block',
+              fontSize: '13px',
+              fontWeight: 600,
+              marginBottom: '6px',
+              color: 'var(--fg-default)'
+            }}>
+              New Password
+            </label>
+            <input
+              type="password"
+              placeholder="Enter your new password"
+              value={passwordData.newPassword}
+              onChange={(e) => setPasswordData({ ...passwordData, newPassword: e.target.value })}
+              style={inputStyle}
+            />
+            <small style={{
+              color: 'var(--fg-muted)',
+              fontSize: '12px',
+              marginTop: '4px',
+              display: 'block'
+            }}>
+              Minimum 8 characters
+            </small>
+          </div>
+
+          <button
+            type="submit"
+            disabled={isLoading}
+            style={{
+              padding: '10px',
+              borderRadius: 'var(--radius-md)',
+              border: 'none',
+              background: isLoading ? 'var(--fg-subtle)' : 'var(--accent-primary)',
+              color: '#fff',
+              fontSize: '14px',
+              fontWeight: 600,
+              cursor: isLoading ? 'not-allowed' : 'pointer',
+              opacity: isLoading ? 0.6 : 1,
+              transition: 'all var(--transition-fast)'
+            }}
+          >
+            {isLoading ? 'Updating...' : 'Update Password'}
           </button>
         </form>
       )}

@@ -1,8 +1,9 @@
 import React, { useEffect, useState, useRef } from 'react';
 import axiosInstance from '../api/axiosConfig';
 import { useParams, Link } from 'react-router-dom';
-import { Book, Users, Star, MapPin, Calendar, Camera, Trash2 } from 'lucide-react';
+import { Book, Users, Star, MapPin, Calendar, Camera, Trash2, Settings } from 'lucide-react';
 import { useAuth } from '../store/authStore';
+import ProfileUpdateForm from './ProfileUpdateForm';
 
 function Profile() {
   const { username } = useParams();
@@ -11,6 +12,7 @@ function Profile() {
   const [loading, setLoading] = useState(true);
   const [uploadingProfile, setUploadingProfile] = useState(false);
   const [uploadError, setUploadError] = useState('');
+  const [showSettings, setShowSettings] = useState(false);
   const fileInputRef = useRef(null);
   const isOwnProfile = currentUser?.name === username;
 
@@ -238,6 +240,30 @@ function Profile() {
               >
                 <Trash2 size={16} />
               </button>
+              <button
+                onClick={() => setShowSettings(!showSettings)}
+                style={{
+                  padding: '10px 12px',
+                  fontSize: '13px',
+                  fontWeight: 600,
+                  background: 'var(--bg-subtle)',
+                  color: 'var(--fg-default)',
+                  border: '1px solid var(--border-default)',
+                  borderRadius: 'var(--radius-md)',
+                  cursor: 'pointer',
+                  transition: 'all var(--transition-fast)',
+                  fontFamily: 'inherit',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '6px',
+                }}
+                onMouseEnter={e => { e.currentTarget.style.borderColor = 'var(--fg-subtle)'; }}
+                onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--border-default)'; }}
+                title="Account settings"
+              >
+                <Settings size={16} />
+              </button>
             </div>
           )}
 
@@ -300,6 +326,18 @@ function Profile() {
             <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '12px', fontSize: '13px', color: 'var(--fg-subtle)' }}>
               <Calendar size={14} />
               Joined {new Date(profileData.createdAt).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
+            </div>
+          )}
+
+          {/* Settings Form - shown when isOwnProfile and showSettings is true */}
+          {isOwnProfile && showSettings && (
+            <div style={{ marginTop: '20px', paddingTop: '20px', borderTop: '1px solid var(--border-default)' }}>
+              <ProfileUpdateForm 
+                user={profileData}
+                onUpdate={(updatedUser) => {
+                  setProfileData(updatedUser);
+                }}
+              />
             </div>
           )}
         </div>

@@ -74,6 +74,40 @@ userRoute.put('/users', authMiddleware, async (req, res, next) => {
   }
 })
 
+// GET /api/search - Search for users by email or username
+// Public endpoint (no authentication required)
+// Supports query parameters: email, username
+// Returns user data without password
+userRoute.get('/search', async (req, res, next) => {
+  try {
+    const { email, username } = req.query;
+
+    if (!email && !username) {
+      return res.status(400).json({ message: 'Please provide email or username to search' });
+    }
+
+    let query = {};
+    if (email) {
+      query.email = email;
+    } else if (username) {
+      query.name = { $regex: `^${username}$`, $options: 'i' };
+    }
+
+    const user = await UserModel.findOne(query).select('-password');
+
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    res.status(200).json({ 
+      message: 'User found', 
+      payload: user 
+    });
+  } catch (err) {
+    next(err);
+  }
+});
+
 // GET /api/users/:username - Retrieve User Profile endpoint
 // Public endpoint (no authentication required) - retrieves user profile by username
 // Uses .select('-password') to exclude password from response (security)
@@ -266,3 +300,114 @@ userRoute.delete('/delete', authMiddleware, async (req, res, next) => {
     next(err) 
   }
 })
+
+// PUT /api/update-password - Change User Password
+// Requires valid JWT token (authMiddleware verifies user identity)
+// Requires verification of current password (security measure to prevent unauthorized password changes)
+// New password must be at least 8 characters
+userRoute.put('/update-password', authMiddleware, async (req, res, next) => {
+  try {
+    const userId = req.user.userId;
+    const { currentPassword, newPassword } = req.body;
+
+    if (!currentPassword || !newPassword) {
+      return res.status(400).json({ message: 'Current password and new password are required' });
+    }
+
+    if (newPassword.length < 8) {
+      return res.status(400).json({ message: 'New password must be at least 8 characters' });
+    }
+
+    // Fetch user with password field
+    const user = await UserModel.findById(userId);
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    // Verify current password
+    const isPasswordValid = await bcrypt.compare(currentPassword, user.password);
+    if (!isPasswordValid) {
+      return res.status(401).json({ message: 'Current password is incorrect' });
+    }
+
+    // Hash new password
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+    // Update password
+    user.password = hashedPassword;
+    await user.save();
+
+    res.status(200).json({ 
+      message: 'Password updated successfully'
+    });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// PUT /api/transfer-ownership/:repoId/:newOwnerId - Transfer Repository Ownership
+// Requires valid JWT token and must be current repo owner
+// Transfers all ownership rights to new user
+// New owner must exist in database
+userRoute.put('/transfer-ownership/:repoId/:newOwnerId', authMiddleware, async (req, res, next) => {
+  try {
+    const { repoId, newOwnerId } = req.params;
+    const currentUserId = req.user.userId;
+
+    // Validate ObjectIds
+    if (!repoId.match(/^[0-9a-fA-F]{24}$/) || !newOwnerId.match(/^[0-9a-fA-F]{24}$/)) {
+      return res.status(400).json({ message: 'Invalid ID format' });
+    }
+
+    // Fetch repository
+    const repository = await RepositoryModel.findById(repoId);
+    if (!repository) {
+      return res.status(404).json({ message: 'Repository not found' });
+    }
+
+    // Verify current user is owner
+    if (repository.owner.toString() !== currentUserId) {
+      return res.status(403).json({ message: 'Only repository owner can transfer ownership' });
+    }
+
+    // Verify new owner exists
+    const newOwner = await UserModel.findById(newOwnerId);
+    if (!newOwner) {
+      return res.status(404).json({ message: 'New owner user not found' });
+    }
+
+    // Prevent transferring to current owner
+    if (newOwnerId === currentUserId) {
+      return res.status(400).json({ message: 'Cannot transfer ownership to current owner' });
+    }
+
+    // Transfer ownership
+    const oldOwnerId = repository.owner;
+    repository.owner = newOwnerId;
+    
+    // Remove new owner from collaborators if present
+    repository.collaborators = repository.collaborators.filter(
+      collab => collab.toString() !== newOwnerId
+    );
+    
+    await repository.save();
+
+    // Update user's repositories arrays
+    await UserModel.findByIdAndUpdate(
+      oldOwnerId,
+      { $pull: { repositories: repoId } }
+    );
+
+    await UserModel.findByIdAndUpdate(
+      newOwnerId,
+      { $addToSet: { repositories: repoId } }
+    );
+
+    res.status(200).json({ 
+      message: 'Repository ownership transferred successfully',
+      repository: repository
+    });
+  } catch (err) {
+    next(err);
+  }
+});
