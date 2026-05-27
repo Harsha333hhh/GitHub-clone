@@ -19,10 +19,18 @@ const articleSchema = new Schema({
     enum:["public","private"],
     default:"public"
   },
+  // Primary language (detected automatically from files)
   language:{
     type:String,
-    required:[true,"Language is required"]
+    default:"JavaScript"
   },
+  // Language statistics - array of {language, percentage}
+  languages:[{
+    _id: false,
+    language: String,      // e.g., "JavaScript", "CSS", "HTML"
+    percentage: Number,    // e.g., 65, 20, 15
+    color: String         // hex color for UI display
+  }],
   createdAt:{
     type:Date,
     default:Date.now
@@ -46,4 +54,12 @@ const articleSchema = new Schema({
   timestamps:true,
   versionKey:false
 })
+
+// Add indexes for query performance
+articleSchema.index({ owner: 1 });  // Fast lookups by owner
+articleSchema.index({ visibility: 1 });  // Fast visibility filtering
+articleSchema.index({ title: 'text' });  // Text search on title
+articleSchema.index({ owner: 1, status: 1 });  // Compound index for common queries
+articleSchema.index({ createdAt: -1 });  // Sorting by creation date
+
 export const RepositoryModel = model("repository",articleSchema);

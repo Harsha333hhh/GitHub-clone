@@ -6,11 +6,35 @@ import { authMiddleware } from '../Middlewares/authMiddleware.js';
 
 export const repositoryRoute = express.Router()
 
-// Get all repositories
+// Get all repositories (only public ones for non-owners) with pagination
 repositoryRoute.get('/repositories', async (req, res) => {
     try {
-        const repositories = await RepositoryModel.find().populate('owner', 'name email profileImage');
-        res.status(200).json({ message: "Repositories retrieved successfully", payload: repositories });
+        // Parse pagination parameters (default: page 1, limit 20)
+        const page = parseInt(req.query.page) || 1;
+        const limit = parseInt(req.query.limit) || 20;
+        const skip = (page - 1) * limit;
+
+        // Only return public repositories to non-authenticated users
+        const repositories = await RepositoryModel
+            .find({ visibility: 'public' })
+            .populate('owner', 'name email profileImage')
+            .skip(skip)
+            .limit(limit)
+            .sort({ createdAt: -1 });
+
+        // Get total count for pagination metadata
+        const total = await RepositoryModel.countDocuments({ visibility: 'public' });
+        
+        res.status(200).json({ 
+            message: "Repositories retrieved successfully", 
+            payload: repositories,
+            pagination: {
+                page,
+                limit,
+                total,
+                pages: Math.ceil(total / limit)
+            }
+        });
     } catch (err) {
         res.status(500).json({ message: "Error retrieving repositories", reason: err.message });
     }
@@ -105,10 +129,34 @@ repositoryRoute.get('/repositories/user/:userId',async(req,res)=>{
         if(!userId){
             return res.status(400).json({message:"User ID is required"})
         }
+        
+        // Parse pagination parameters
+        const page = parseInt(req.query.page) || 1;
+        const limit = parseInt(req.query.limit) || 20;
+        const skip = (page - 1) * limit;
+        
         // read repositories by this owner 
-        let repositories = await RepositoryModel.find({owner:userId}).populate('owner', 'name email profileImage');
+        let repositories = await RepositoryModel
+            .find({owner:userId})
+            .populate('owner', 'name email profileImage')
+            .skip(skip)
+            .limit(limit)
+            .sort({ createdAt: -1 });
+        
+        // Get total count
+        const total = await RepositoryModel.countDocuments({ owner: userId });
+        
         // send res 
-        res.status(200).json({message:"Repositories retrieved successfully",payload:repositories})
+        res.status(200).json({
+            message:"Repositories retrieved successfully",
+            payload:repositories,
+            pagination: {
+                page,
+                limit,
+                total,
+                pages: Math.ceil(total / limit)
+            }
+        })
     } catch (err) {
         res.status(500).json({message:"Error retrieving repositories",reason:err.message})
     }
@@ -118,10 +166,34 @@ repositoryRoute.get('/repositories/user/:userId',async(req,res)=>{
 repositoryRoute.get('/repositories/:userId',async(req,res)=>{
     try {
         let userId = req.params.userId
+        
+        // Parse pagination parameters
+        const page = parseInt(req.query.page) || 1;
+        const limit = parseInt(req.query.limit) || 20;
+        const skip = (page - 1) * limit;
+        
         // read active repositories by this owner 
-        let repositories = await RepositoryModel.find({owner:userId,status:"active"}).populate('owner', 'name email profileImage');
+        let repositories = await RepositoryModel
+            .find({owner:userId,status:"active"})
+            .populate('owner', 'name email profileImage')
+            .skip(skip)
+            .limit(limit)
+            .sort({ createdAt: -1 });
+        
+        // Get total count
+        const total = await RepositoryModel.countDocuments({ owner: userId, status: "active" });
+        
         // send res 
-        res.status(200).json({message:"Repositories retrieved successfully",payload:repositories}) 
+        res.status(200).json({
+            message:"Repositories retrieved successfully",
+            payload:repositories,
+            pagination: {
+                page,
+                limit,
+                total,
+                pages: Math.ceil(total / limit)
+            }
+        }) 
     } catch (err) {
         res.status(500).json({message:"Error retrieving repositories",reason:err.message})
     }
@@ -323,5 +395,62 @@ repositoryRoute.get('/repositories/:repositoryId/collaborators', async (req, res
         });
     } catch (err) {
         res.status(500).json({ message: "Error retrieving collaborators", reason: err.message });
+    }
+});
+
+// Toggle repository visibility (OWNER ONLY)
+repositoryRoute.put('/repositories/:repositoryId/visibility', authMiddleware, async (req, res) => {
+    try {
+        const { repositoryId } = req.params;
+        const { visibility } = req.body;
+        const userId = req.user.userId;
+
+        // Validate visibility value
+        if (!['public', 'private'].includes(visibility)) {
+            return res.status(400).json({ message: "Visibility must be 'public' or 'private'" });
+        }
+
+        // Find repository
+        const repository = await RepositoryModel.findById(repositoryId);
+        if (!repository) {
+            return res.status(404).json({ message: "Repository not found" });
+        }
+
+        // Check if user is owner
+        if (repository.owner.toString() !== userId) {
+            return res.status(403).json({ message: "Only the repository owner can change visibility" });
+        }
+
+        // Update visibility
+        repository.visibility = visibility;
+        await repository.save();
+
+        // Notify collaborators of visibility change
+        if (repository.collaborators && repository.collaborators.length > 0) {
+            for (const collaboratorId of repository.collaborators) {
+                if (collaboratorId.toString() !== userId) {
+                    const notification = new NotificationModel({
+                        recipient: collaboratorId,
+                        sender: userId,
+                        type: 'repository_visibility_changed',
+                        message: `changed ${repository.title} visibility to ${visibility}`,
+                        repository: repositoryId
+                    });
+                    await notification.save();
+                }
+            }
+        }
+
+        // Populate and return updated repository
+        const updatedRepo = await RepositoryModel.findById(repositoryId)
+            .populate('owner', 'name email profileImage')
+            .populate('collaborators', 'name email profileImage');
+
+        res.status(200).json({ 
+            message: `Repository visibility changed to ${visibility}`, 
+            payload: updatedRepo 
+        });
+    } catch (err) {
+        res.status(500).json({ message: "Error changing repository visibility", reason: err.message });
     }
 });

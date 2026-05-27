@@ -24,18 +24,17 @@ const userSchema = new Schema({
   },
   bio:{
     type:String,
-    required:[true,"Bio is required"],
     default:""
   },
-  //followeres array of user ids 
+  // Followers array - stores user IDs of people following this user
   followers:[{
-    type:Number,
-    default:0  // tracks follower count
+    type:Schema.Types.ObjectId,
+    ref:"user"
   }],
-  //array of user ids 
+  // Following array - stores user IDs that this user follows
   following:[{
-    type:Number,
-    default:0  // tracks following count
+    type:Schema.Types.ObjectId,
+    ref:"user"
   }],
   //array of repository ids - ObjectId references to Repository collection
   repositories:[{
@@ -52,5 +51,9 @@ const userSchema = new Schema({
   versionKey:false  // removes __v field from documents
 })
 
+// Add indexes for query performance
+userSchema.index({ email: 1 });  // Fast email lookups
+userSchema.index({ name: 1 });   // Fast name searches
+userSchema.index({ createdAt: -1 });  // Fast sorting by creation date
 
 export const UserModel = model("user",userSchema);

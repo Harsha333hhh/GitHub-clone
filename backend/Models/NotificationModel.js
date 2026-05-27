@@ -13,7 +13,18 @@ const notificationSchema = new Schema({
   },
   type: {
     type: String,
-    enum: ['pull_request', 'pr_approved', 'pr_rejected', 'file_created', 'file_updated', 'file_deleted'],
+    enum: [
+      'pull_request', 
+      'pr_approved', 
+      'pr_rejected', 
+      'pr_created',
+      'file_created', 
+      'file_updated', 
+      'file_deleted',
+      'collaborator_added',
+      'repository_visibility_changed',
+      'ownership_transferred'
+    ],
     required: true
   },
   message: {
@@ -32,5 +43,11 @@ const notificationSchema = new Schema({
   timestamps: true,
   versionKey: false
 });
+
+// Add indexes for query performance
+notificationSchema.index({ recipient: 1 });  // Fast lookups by recipient
+notificationSchema.index({ read: 1 });  // Fast filtering by read status
+notificationSchema.index({ recipient: 1, read: 1 });  // Compound index for unread notifications
+notificationSchema.index({ createdAt: -1 });  // Sorting by creation date
 
 export const NotificationModel = model('notification', notificationSchema);

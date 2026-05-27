@@ -121,13 +121,13 @@ function Signup() {
           </div>
 
           <div>
-            <label style={labelStyle}>Bio *</label>
+            <label style={labelStyle}>Bio <span style={{ color: 'var(--fg-subtle)', fontWeight: 400 }}>(optional)</span></label>
             <textarea name="bio" rows="3" placeholder="Tell us about yourself..."
               onChange={handleChange}
               style={{ ...inputStyle, resize: 'vertical', minHeight: '80px' }}
               onFocus={e => { e.target.style.borderColor = 'var(--accent-primary)'; e.target.style.boxShadow = '0 0 0 3px rgba(88,166,255,0.15)'; }}
               onBlur={e => { e.target.style.borderColor = 'var(--border-default)'; e.target.style.boxShadow = 'none'; }}
-              required />
+            />
           </div>
 
           <button type="submit" disabled={loading} style={{

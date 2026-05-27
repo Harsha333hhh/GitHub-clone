@@ -3,6 +3,7 @@ import { fileModel } from "../Models/FileModel.js";
 import { RepositoryModel } from "../Models/RepositoryModel.js";
 import { NotificationModel } from "../Models/NotificationModel.js";
 import { authMiddleware } from "../Middlewares/authMiddleware.js";
+import { calculateLanguageStats, getPrimaryLanguage } from "../utils/languageDetector.js";
 
 const filerouter = express.Router();
 
@@ -13,6 +14,23 @@ async function checkWriteAccess(userId, repoId) {
   const isOwner = repo.owner.toString() === userId;
   const isCollaborator = repo.collaborators && repo.collaborators.map(c => c.toString()).includes(userId);
   return { allowed: isOwner || isCollaborator, repo, isOwner };
+}
+
+// Helper: recalculate repository language statistics
+async function updateRepositoryLanguages(repoId) {
+  try {
+    const files = await fileModel.find({ repoId });
+    const stats = calculateLanguageStats(files);
+    const primaryLang = getPrimaryLanguage(stats);
+    
+    await RepositoryModel.findByIdAndUpdate(repoId, {
+      languages: stats,
+      language: primaryLang,
+      updatedAt: new Date()
+    });
+  } catch (error) {
+    console.error('Error updating language stats:', error);
+  }
 }
 
 // Upload file (auth required, owner or collaborator only)
@@ -30,6 +48,9 @@ filerouter.post("/:repoId/files", authMiddleware, async (req, res) => {
       ...req.body
     });
     await file.save();
+
+    // Recalculate language statistics for repository
+    await updateRepositoryLanguages(req.params.repoId);
 
     // Notify owner if a collaborator created the file
     if (!isOwner) {
@@ -102,6 +123,9 @@ filerouter.put("/files/:fileId", authMiddleware, async (req, res) => {
       { new: true }
     );
 
+    // Recalculate language statistics for repository
+    await updateRepositoryLanguages(existingFile.repoId);
+
     // Notify owner if a collaborator updated the file
     if (!isOwner) {
       const notification = new NotificationModel({
@@ -139,6 +163,9 @@ filerouter.delete("/files/:fileId", authMiddleware, async (req, res) => {
     }
 
     await fileModel.findByIdAndDelete(req.params.fileId);
+
+    // Recalculate language statistics for repository
+    await updateRepositoryLanguages(existingFile.repoId);
 
     // Notify owner if a collaborator deleted the file
     if (!isOwner) {

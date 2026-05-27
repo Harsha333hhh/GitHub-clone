@@ -8,7 +8,6 @@ function CreateRepo() {
   const [formData, setFormData] = useState({
     title: '',
     description: '',
-    language: 'JavaScript',
     visibility: 'public',
     status: 'active'
   });
@@ -97,23 +96,6 @@ function CreateRepo() {
               onBlur={e => { e.target.style.borderColor = 'var(--border-default)'; e.target.style.boxShadow = 'none'; }}
               required
             />
-          </div>
-          <div style={{ width: '180px', flexShrink: 0 }}>
-            <label style={labelStyle}>Language</label>
-            <select
-              name="language"
-              value={formData.language}
-              onChange={handleChange}
-              style={{ ...inputStyle, cursor: 'pointer', appearance: 'auto' }}
-            >
-              <option value="JavaScript">JavaScript</option>
-              <option value="Python">Python</option>
-              <option value="Java">Java</option>
-              <option value="C++">C++</option>
-              <option value="TypeScript">TypeScript</option>
-              <option value="Go">Go</option>
-              <option value="Rust">Rust</option>
-            </select>
           </div>
         </div>
 

@@ -144,6 +144,114 @@ userRoute.post('/upload-profile-picture', authMiddleware, async (req, res, next)
   }
 });
 
+// PUT /api/update-email - Change User Email (secure flow)
+// Requires valid JWT token (authMiddleware verifies user identity)
+// Validates new email is unique and valid
+// Prevents unauthorized email changes (XSS/CSRF protection via token)
+userRoute.put('/update-email', authMiddleware, async (req, res, next) => {
+  try {
+    const userId = req.user.userId;
+    const { newEmail, password } = req.body;
+
+    if (!newEmail || !password) {
+      return res.status(400).json({ message: 'New email and password are required' });
+    }
+
+    // Get user and verify password
+    const user = await UserModel.findById(userId);
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    const isPasswordValid = await bcrypt.compare(password, user.password);
+    if (!isPasswordValid) {
+      return res.status(401).json({ message: 'Invalid password' });
+    }
+
+    // Check if new email is already in use
+    const existingUser = await UserModel.findOne({ email: newEmail.toLowerCase() });
+    if (existingUser && existingUser._id.toString() !== userId) {
+      return res.status(400).json({ message: 'Email is already in use' });
+    }
+
+    // Update email
+    user.email = newEmail.toLowerCase();
+    await user.save();
+
+    res.status(200).json({ 
+      message: 'Email updated successfully', 
+      user: user.toObject({ transform: (doc, ret) => { delete ret.password; return ret; } })
+    });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// PUT /api/update-username - Change User Username/Display Name
+// Requires valid JWT token (authMiddleware verifies user identity)
+// Validates new username is unique and valid
+userRoute.put('/update-username', authMiddleware, async (req, res, next) => {
+  try {
+    const userId = req.user.userId;
+    const { newUsername } = req.body;
+
+    if (!newUsername || newUsername.trim().length === 0) {
+      return res.status(400).json({ message: 'Username is required' });
+    }
+
+    if (newUsername.length < 2 || newUsername.length > 50) {
+      return res.status(400).json({ message: 'Username must be between 2 and 50 characters' });
+    }
+
+    // Check if username already exists
+    const existingUser = await UserModel.findOne({ name: newUsername.trim() });
+    if (existingUser && existingUser._id.toString() !== userId) {
+      return res.status(400).json({ message: 'Username is already taken' });
+    }
+
+    // Update username
+    const updatedUser = await UserModel.findByIdAndUpdate(
+      userId,
+      { name: newUsername.trim() },
+      { new: true }
+    ).select('-password');
+
+    res.status(200).json({ 
+      message: 'Username updated successfully', 
+      user: updatedUser
+    });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// PUT /api/update-bio - Update User Bio (optional field)
+// Requires valid JWT token (authMiddleware verifies user identity)
+// Bio is optional and can be empty
+userRoute.put('/update-bio', authMiddleware, async (req, res, next) => {
+  try {
+    const userId = req.user.userId;
+    const { bio } = req.body;
+
+    if (bio && bio.length > 500) {
+      return res.status(400).json({ message: 'Bio must be less than 500 characters' });
+    }
+
+    const updatedUser = await UserModel.findByIdAndUpdate(
+      userId,
+      { bio: bio || '' },
+      { new: true }
+    ).select('-password');
+
+    res.status(200).json({ 
+      message: 'Bio updated successfully', 
+      user: updatedUser
+    });
+  } catch (err) {
+    next(err);
+  }
+});
+
 // DELETE /api/delete - Permanently Delete User Account endpoint
 // Requires valid JWT token (authMiddleware verifies user has valid authentication)
 // Removes user document from MongoDB database and clears authentication cookie

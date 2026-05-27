@@ -43,4 +43,10 @@ const issueSchema = new Schema(
 }
 );
 
+// Add indexes for query performance
+issueSchema.index({ repoId: 1 });  // Fast lookups by repository
+issueSchema.index({ author: 1 });  // Fast lookups by author
+issueSchema.index({ status: 1 });  // Fast filtering by status
+issueSchema.index({ repoId: 1, status: 1 });  // Compound index for common queries
+
 export const IssueTypeModel = model("issue",issueSchema);

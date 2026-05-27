@@ -78,4 +78,11 @@ const pullRequestSchema = new Schema({
   versionKey: false
 });
 
+// Add indexes for query performance
+pullRequestSchema.index({ repository: 1 });  // Fast lookups by repository
+pullRequestSchema.index({ author: 1 });  // Fast lookups by author
+pullRequestSchema.index({ status: 1 });  // Fast filtering by status
+pullRequestSchema.index({ repository: 1, status: 1 });  // Compound index for common queries
+pullRequestSchema.index({ createdAt: -1 });  // Sorting by creation date
+
 export const PullRequestModel = model('pullrequest', pullRequestSchema);

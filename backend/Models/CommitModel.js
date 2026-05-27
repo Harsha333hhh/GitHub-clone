@@ -35,4 +35,10 @@ const commitSchema = new Schema(
   }
 );
 
+// Add indexes for query performance
+commitSchema.index({ repoId: 1 });  // Fast lookups by repository
+commitSchema.index({ author: 1 });  // Fast lookups by author
+commitSchema.index({ commitHash: 1 });  // Fast hash lookups
+commitSchema.index({ repoId: 1, createdAt: -1 });  // Compound index for repository commit history
+
 export const CommitModel = model("commit", commitSchema);

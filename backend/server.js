@@ -5,6 +5,7 @@ import { connect } from 'mongoose'
 import { userRoute } from './APIs/UsersApi.js'
 import { repositoryRoute } from './APIs/RepoApi.js'
 import { authMiddleware } from './Middlewares/authMiddleware.js'
+import { errorHandler } from './Middlewares/errorHandler.js'
 import { commonRouter } from './APIs/CommonApi.js'
 import filerouter from './APIs/FileApi.js'
 import commitRouter from './APIs/CommitApi.js'
@@ -89,13 +90,10 @@ app.use('/issue-api', issueRouter);
 app.use('/pullrequest-api', authMiddleware, pullRequestRouter);
 app.use('/notification-api', authMiddleware, notificationRouter);
 
-// Error handling middleware (BEFORE invalid path handler)
-app.use((err, req, res, next) => {
-  console.error('Server error:', err)
-  res.status(err.status || 500).json({ message: err.message || 'Internal server error', error: err.toString() })
-})
+// Centralized error handling middleware (MUST be last route handler)
+app.use(errorHandler);
 
-// dealing with invalid path (AFTER all routes and error handler)
+// 404 handler (AFTER error handler)
 app.use((req, res) => {
   console.log('Invalid path:', req.url);
   res.status(404).json({ message: `${req.url} is invalid`  });

@@ -34,4 +34,10 @@ const fileSchema=new Schema(
         versionKey:false
     }
 );
+
+// Add indexes for query performance
+fileSchema.index({ repoId: 1 });  // Fast lookups by repository
+fileSchema.index({ fileName: 1 });  // Fast file searches
+fileSchema.index({ repoId: 1, fileName: 1 });  // Compound index for finding files in repos
+
 export const fileModel=model("file",fileSchema)
