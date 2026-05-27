@@ -7,9 +7,10 @@ import axios from 'axios';
 // Includes validation and security checks (password verification for email)
 
 const ProfileUpdateForm = ({ user, onUpdate }) => {
-  const [activeTab, setActiveTab] = useState('email'); // 'email', 'username', 'bio'
+  const [activeTab, setActiveTab] = useState('email'); // 'email', 'username', 'bio', 'password'
   const [isLoading, setIsLoading] = useState(false);
   const [message, setMessage] = useState({ type: '', text: '' });
+  const [passwordStrength, setPasswordStrength] = useState({ score: 0, label: '' });
 
   // Email update state
   const [emailData, setEmailData] = useState({
@@ -27,6 +28,38 @@ const ProfileUpdateForm = ({ user, onUpdate }) => {
     currentPassword: '',
     newPassword: ''
   });
+
+  // Calculate password strength
+  const calculatePasswordStrength = (password) => {
+    let score = 0;
+    
+    // Length checks
+    if (password.length >= 8) score += 1;
+    if (password.length >= 12) score += 1;
+    if (password.length >= 16) score += 1;
+    
+    // Character type checks
+    if (/[a-z]/.test(password)) score += 1;  // lowercase
+    if (/[A-Z]/.test(password)) score += 1;  // uppercase
+    if (/\d/.test(password)) score += 1;     // number
+    if (/[!@#$%^&*()_+\-=\[\]{};:'",.<>?/\\|`~]/.test(password)) score += 1;  // special char
+
+    let label = '';
+    if (score === 0) label = 'No password';
+    else if (score <= 2) label = 'Weak';
+    else if (score <= 4) label = 'Medium';
+    else label = 'Strong';
+
+    return { score, label };
+  };
+
+  const getPasswordStrengthColor = () => {
+    if (passwordStrength.score === 0) return 'var(--fg-muted)';
+    if (passwordStrength.label === 'Weak') return '#f85149';     // red
+    if (passwordStrength.label === 'Medium') return '#d29922';   // yellow
+    if (passwordStrength.label === 'Strong') return '#3fb950';   // green
+    return 'var(--fg-muted)';
+  };
 
   const handleUpdateEmail = async (e) => {
     e.preventDefault();
@@ -452,9 +485,45 @@ const ProfileUpdateForm = ({ user, onUpdate }) => {
               type="password"
               placeholder="Enter your new password"
               value={passwordData.newPassword}
-              onChange={(e) => setPasswordData({ ...passwordData, newPassword: e.target.value })}
+              onChange={(e) => {
+                setPasswordData({ ...passwordData, newPassword: e.target.value });
+                setPasswordStrength(calculatePasswordStrength(e.target.value));
+              }}
               style={inputStyle}
             />
+            
+            {/* Password Strength Indicator */}
+            {passwordData.newPassword && (
+              <div style={{ marginTop: '8px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                {/* Strength bars */}
+                <div style={{ display: 'flex', gap: '4px', flex: 1 }}>
+                  {[1, 2, 3].map((bar) => (
+                    <div
+                      key={bar}
+                      style={{
+                        height: '4px',
+                        flex: 1,
+                        borderRadius: '2px',
+                        background: passwordStrength.score >= bar ? getPasswordStrengthColor() : 'var(--border-default)',
+                        transition: 'all 0.2s'
+                      }}
+                    />
+                  ))}
+                </div>
+                
+                {/* Strength label */}
+                <span style={{
+                  fontSize: '12px',
+                  fontWeight: 600,
+                  color: getPasswordStrengthColor(),
+                  whiteSpace: 'nowrap',
+                  minWidth: '60px'
+                }}>
+                  {passwordStrength.label}
+                </span>
+              </div>
+            )}
+
             <small style={{
               color: 'var(--fg-muted)',
               fontSize: '12px',

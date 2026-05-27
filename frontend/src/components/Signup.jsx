@@ -13,8 +13,41 @@ function Signup() {
   });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [passwordStrength, setPasswordStrength] = useState({ score: 0, label: '' });
   const { completeSignup } = useAuth();
   const isSubmittingRef = useRef(false);
+
+  // Calculate password strength
+  const calculatePasswordStrength = (password) => {
+    let score = 0;
+    
+    // Length checks
+    if (password.length >= 8) score += 1;
+    if (password.length >= 12) score += 1;
+    if (password.length >= 16) score += 1;
+    
+    // Character type checks
+    if (/[a-z]/.test(password)) score += 1;  // lowercase
+    if (/[A-Z]/.test(password)) score += 1;  // uppercase
+    if (/\d/.test(password)) score += 1;     // number
+    if (/[!@#$%^&*()_+\-=\[\]{};:'",.<>?/\\|`~]/.test(password)) score += 1;  // special char
+
+    let label = '';
+    if (score === 0) label = 'No password';
+    else if (score <= 2) label = 'Weak';
+    else if (score <= 4) label = 'Medium';
+    else label = 'Strong';
+
+    return { score, label };
+  };
+
+  const getPasswordStrengthColor = () => {
+    if (passwordStrength.score === 0) return 'var(--fg-muted)';
+    if (passwordStrength.label === 'Weak') return '#f85149';     // red
+    if (passwordStrength.label === 'Medium') return '#d29922';   // yellow
+    if (passwordStrength.label === 'Strong') return '#3fb950';   // green
+    return 'var(--fg-muted)';
+  };
 
   const handleSignup = async (e) => {
     e.preventDefault();
@@ -42,7 +75,13 @@ function Signup() {
   };
 
   const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+    const { name, value } = e.target;
+    setFormData({ ...formData, [name]: value });
+    
+    // Calculate password strength if password field changed
+    if (name === 'password') {
+      setPasswordStrength(calculatePasswordStrength(value));
+    }
   };
 
   const inputStyle = {
@@ -118,6 +157,38 @@ function Signup() {
               onFocus={e => { e.target.style.borderColor = 'var(--accent-primary)'; e.target.style.boxShadow = '0 0 0 3px rgba(88,166,255,0.15)'; }}
               onBlur={e => { e.target.style.borderColor = 'var(--border-default)'; e.target.style.boxShadow = 'none'; }}
               required />
+            
+            {/* Password Strength Indicator */}
+            {formData.password && (
+              <div style={{ marginTop: '8px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                {/* Strength bars */}
+                <div style={{ display: 'flex', gap: '4px', flex: 1 }}>
+                  {[1, 2, 3].map((bar) => (
+                    <div
+                      key={bar}
+                      style={{
+                        height: '4px',
+                        flex: 1,
+                        borderRadius: '2px',
+                        background: passwordStrength.score >= bar ? getPasswordStrengthColor() : 'var(--border-default)',
+                        transition: 'all 0.2s'
+                      }}
+                    />
+                  ))}
+                </div>
+                
+                {/* Strength label */}
+                <span style={{
+                  fontSize: '12px',
+                  fontWeight: 600,
+                  color: getPasswordStrengthColor(),
+                  whiteSpace: 'nowrap',
+                  minWidth: '60px'
+                }}>
+                  {passwordStrength.label}
+                </span>
+              </div>
+            )}
           </div>
 
           <div>
